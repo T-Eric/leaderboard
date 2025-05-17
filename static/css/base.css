@@ -1,0 +1,221 @@
+/* 基本重置和全局样式 */
+:root {
+  --sidebar-width-expanded: 240px;
+  --sidebar-width-collapsed: 70px;
+  --transition-speed: 0.3s;
+
+  /* 主题颜色变量 - 跟随系统/日间 默认 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-sidebar: #343a40; /* 深色侧边栏 */
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-sidebar: #f8f9fa; /* 侧边栏文字亮色 */
+  --accent-color: #007bff;
+  --border-color: #dee2e6;
+}
+
+/* 跟随系统 - 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    /* 仅当未明确设置主题时 */
+    --bg-primary: #212529;
+    --bg-secondary: #343a40;
+    --bg-sidebar: #1c1e22; /* 侧边栏可以更暗 */
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --text-sidebar: #f8f9fa;
+    --accent-color: #0d6efd;
+    --border-color: #495057;
+  }
+}
+
+/* 日间模式 (明确设置) */
+html[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-sidebar: #1c1e22;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-sidebar: #f8f9fa;
+  --accent-color: #007bff;
+  --border-color: #dee2e6;
+}
+
+/* 夜间模式 (明确设置) */
+html[data-theme="dark"] {
+  --bg-primary: #212529;
+  --bg-secondary: #343a40;
+  --bg-sidebar: #1c1e22;
+  --text-primary: #f8f9fa;
+  --text-secondary: #adb5bd;
+  --text-sidebar: #f8f9fa;
+  --accent-color: #0d6efd;
+  --border-color: #495057;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden; /* 防止水平滚动条 */
+  transition: background-color var(--transition-speed) ease,
+    color var(--transition-speed) ease;
+}
+
+.app-container {
+  display: flex;
+}
+
+/* 侧边导航栏 */
+.sidebar {
+  width: var(--sidebar-width-expanded);
+  height: 100vh; /* 占据整个视口高度 */
+  position: fixed; /* 固定位置，不随滚动条移动 */
+  top: 0;
+  left: 0;
+  background-color: var(--bg-sidebar);
+  color: var(--text-sidebar);
+  transition: width var(--transition-speed) ease-in-out;
+  overflow-x: hidden; /* 隐藏展开时的横向溢出 */
+  z-index: 1000; /* 确保在最上层 */
+  display: flex; /* Added for sidebar-inner to take full height */
+  flex-direction: column; /* Added */
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+.sidebar-inner {
+  flex-grow: 1; /* Takes remaining space in sidebar flex column */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Top items, then space, then bottom items */
+  overflow-y: auto; /* Allow sidebar content to scroll if it exceeds height */
+  overflow-x: hidden;
+  /* padding-bottom: 10px; /* Add some padding at the bottom if needed */
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  /* no specific styles here, styling goes to <a> or <button> */
+}
+
+.nav-item a,
+.nav-item .theme-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px; /* 统一左右padding */
+  color: var(--text-sidebar);
+  text-decoration: none;
+  white-space: nowrap; /* 防止文字换行 */
+  overflow: hidden; /* 配合nav-text的width:0 */
+  transition: background-color var(--transition-speed) ease,
+    color var(--transition-speed) ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem; /* 确保按钮和链接字体大小一致 */
+}
+/* 为了让 collapsed 状态下， padding 使得图标居中 */
+.sidebar.collapsed .nav-item a,
+.sidebar.collapsed .nav-item .theme-button {
+  padding-left: 20px;
+  padding-right: calc((var(--sidebar-width-collapsed) - 24px) / 2);
+}
+
+.nav-item a:hover,
+.nav-item .theme-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-icon {
+  font-size: 1.2em; /* 图标大小 */
+  min-width: 30px; /* 给图标一个最小宽度，防止文字挤压 */
+  text-align: center;
+  transition: margin-right var(--transition-speed) ease-in-out;
+}
+
+.nav-text {
+  margin-left: 15px;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--transition-speed) ease-in-out,
+    visibility var(--transition-speed) ease-in-out;
+    /* margin-left var(--transition-speed) ease-in-out; */
+}
+
+.sidebar.collapsed .nav-text {
+  opacity: 0;
+  visibility: hidden;
+  width: 0; /* 确保不占空间 */
+  /* margin-left: -10px; 动画效果，可选 */
+}
+
+/* 主体内容区域 */
+.main-content {
+  margin-left: var(--sidebar-width-expanded);
+  width: calc(100% - var(--sidebar-width-expanded));
+  transition: margin-left var(--transition-speed) ease-in-out,
+    width var(--transition-speed) ease-in-out;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 保证内容区域至少和视口一样高 */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.sidebar.collapsed ~ .main-content {
+  /* 使用兄弟选择器影响主体内容 */
+  margin-left: var(--sidebar-width-collapsed);
+  width: calc(100% - var(--sidebar-width-collapsed));
+}
+
+.page-content {
+  padding: 20px;
+  flex-grow: 1; /* 占据剩余空间 */
+}
+
+/* 悬浮按钮 */
+#float-buttons {
+  position: fixed;
+  right: 24px;
+  bottom: 25px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  pointer-events: none;
+}
+#float-buttons button {
+  pointer-events: all;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(50, 60, 90, 0.13);
+  border: 1px solid #e3e3e3;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  font-size: 1.3em;
+  cursor: pointer;
+  transition: background 0.18s, color 0.14s, border-color 0.13s;
+}
+#float-buttons button:hover {
+  color: #fafcff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}

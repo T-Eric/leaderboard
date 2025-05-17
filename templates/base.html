@@ -2,110 +2,82 @@
 <html lang="zh">
 
     <head>
-        {%block head%}
         <meta charset="UTF-8">
-        <title id="id-title">网站标题</title>
-        <link rel="icon" href="{{url_for('static', filename='favicon.ico')}}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css">
-        {%endblock%}
-    </head>
+        <title id="title">网站标题</title>
+        <link rel="favicon" href="{{url_for('static', filename='favicon.ico')}}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" type="text/css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        {%block head%}{%endblock%}
 
-    <body class="theme-auto" id="id-body">
-        {# {%for message in get_flashed_messages()%}
+    <body class="theme-auto" id="body">
+        {%for message in get_flashed_messages()%}
         <div class="alert">{{message}}</div>
-        {%endfor%} #}
+        {%endfor%}
         <!-- 侧边栏及主要布局 -->
-        <div id="id-app-container">
-            <aside id="id-sidebar">
-                <div id="id-sidebar-top">
-                    <!-- Control Panel -->
-                    <nav id="id-nav">
-                        <a id="id-nav-submit" class="nav-item nav-upper" href="/submit">
-                            <span class="nav-icon">
-                                <!-- 提交svg, 如 upload -->
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <path d="M12 16V4M12 4l-6 6M12 4l6 6" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </span>
-                            <span class="nav-desc">提交</span>
-                        </a>
-                        <a id="id-nav-homepage" class="nav-item nav-upper" href="/">
-                            <!-- 首页svg，house -->
-                            <span class="nav-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <path d="M3 12l9-9 9 9" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M9 21V12h6v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                </svg>
-                            </span>
-                            <span class="nav-desc">首页</span>
-                        </a>
-                    </nav>
-                    <hr id="id-sidebar-divider">
-                </div>
-                <div id="id-sidebar-bottom">
-                    <nav id="id-nav-bottom">
-                        <a id="id-nav-login" class="nav-item nav-lower" href="/login">
-                            <span class="nav-icon">
-                                <!-- login (user) svg -->
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
-                                    <path d="M4 20c0-4 8-7 16 0" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" />
-                                </svg>
-                            </span>
-                            <span class="nav-desc">登录</span>
-                        </a>
-                        <!-- 登录后替换为头像和登出，此处仅为占位：
-          <a id="id-nav-logout-user" class="nav-item nav-lower" href="/logout">
-            <img id="id-avatar" src="头像url" alt="头像" class="nav-avatar"/>
-            <span class="nav-desc">登出</span>
-          </a>
-          -->
-                        <a id="id-nav-about" class="nav-item nav-lower" href="/about">
-                            <!-- about/info svg -->
-                            <span class="nav-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                    <path d="M12 16v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                                    <circle cx="12" cy="8" r="1" fill="currentColor" />
-                                </svg>
-                            </span>
-                            <span class="nav-desc">关于</span>
-                        </a>
-                        <a id="id-nav-git" class="nav-item nav-lower" target="_blank" href="">
-                            <!-- github svg -->
-                            <span class="nav-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <path
-                                        d="M12 2c-5.52 0-10 4.56-10 10.18 0 4.5 2.87 8.31 6.84 9.66.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.36-3.37-1.36-.45-1.16-1.11-1.47-1.11-1.47-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06 .89 1.55 2.35 1.1 2.93.84 .09-.66.35-1.1.64-1.35-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.38-2.03 1.01-2.74-.1-.27-.44-1.31.1-2.74 0 0 .83-.27 2.74 1.02 .8-.23 1.67-.35 2.53-.35s1.72.12 2.53.35c1.91-1.29 2.74-1.02 2.74-1.02.54 1.43.2 2.47.1 2.74 .63.71 1.01 1.62 1.01 2.74 0 3.94-2.34 4.81-4.57 5.07 .36.32.68.95.68 1.91 0 1.38-.01 2.5-.01 2.84 0 .27.18.58.69.48A10.19 10.19 0 0 0 22 12.18C22 6.56 17.52 2 12 2z"
-                                        fill="currentColor" />
-                                </svg>
-                            </span>
-                            <span class="nav-desc">Git</span>
-                        </a>
-                        <a id="id-nav-theme" class="nav-item nav-lower" href="#">
-                            <span class="nav-icon" id="id-theme-icon">
-                                <!-- 初始为auto, svg可随主题变化后续JS处理-->
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2" />
-                                </svg>
-                            </span>
-                            <span class="nav-desc" id="id-theme-desc">跟随系统</span>
-                        </a>
-                    </nav>
+        <div id="app-container">
+            <aside class="sidebar collapsed">
+                <div class="sidebar-inner">
+                    <ul class="nav-list nav-list-top">
+                        <li class="nav-item">
+                            <button id="sidebar-toggle" class="theme-button">
+                                <i class="fas fa-bars nav-icon"></i>
+                                <span class="nav-text">Navigation</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{url_for('index')}}">
+                                <i class="fas fa-home nav-icon"></i>
+                                <span class="nav-text">首页</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{url_for('submit')}}">
+                                <i class="fas fa-tachometer-alt nav-icon"></i>
+                                <span class="nav-text">提交</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="nav-list nav-list-bottom">
+                        {# <li class="nav-item">
+                            <a href="{{url_for('settings')}}">
+                                <i class="fas fa-cog nav-icon"></i>
+                                <span class="nav-text">设置</span>
+                            </a>
+                        </li> #}
+                        <li class="nav-item">
+                            <button id="theme-toggle-button" class="theme-button">
+                                <i class="fas fa-adjust nav-icon"></i>
+                                <span class="nav-text">切换样式</span>
+                            </button>
+                        </li>
+                        {# if current_user.is_authenticated #}
+                        {# <li class="nav-item">
+                            <a href="{{url_for('logout')}}'">
+                                <i class="fas fa-user-circle nav-icon"></i> <!--应当是用户头像-->
+                                <span class="nav-text">登录</span>
+                            </a>
+                        </li> #}
+                    </ul>
                 </div>
             </aside>
 
-            <main id="id-main-content">
-                <!-- 这里插入下方各页面内容 -->
-            </main>
+            <div class="main-content">
+                <main class="page-content">
+                    {%block content%}{%endblock%}
+                </main>
+                <footer class="footer">
+                    <small>
+                        &copy; 2025 CS2916
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/">ACMOJ</a>|<a href="https://ji-z.net/">Stargazer's
+                            Blog</a>
+                    </small>
+                </footer>
+            </div>
         </div>
         <!-- 悬浮操作按钮（右下或右侧） -->
-        <div id="id-float-buttons">
-            <button id="id-btn-top" title="回到顶部">
+        <div id="ifloat-buttons">
+            <button id="btn-top" title="回到顶部">
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
                     <path d="M14 22V6M14 6l-7 7M14 6l7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" />
@@ -113,14 +85,8 @@
             </button>
             <!-- 其它悬浮按钮可后续添加 -->
         </div>
-        {%block content%}{%endblock%}
-        <footer class="footer">
-            <small>
-                &copy; 2025 CS2916
-                <a href="https://acm.sjtu.edu.cn/OnlineJudge/">ACMOJ</a>|<a href="https://ji-z.net/">Stargazer's
-                    Blog</a>
-            </small>
-        </footer>
     </body>
+
+    <script src="static/js/base.js"></script>
 
 </html>
