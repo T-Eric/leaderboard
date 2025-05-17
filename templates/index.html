@@ -1,0 +1,45 @@
+{%extends 'base.html'%}
+
+{%block content%}
+<!-- 首页内容部分（插入#id-main-content中） -->
+<section id="id-home">
+    <h1 id="id-home-title">To-Be-Named Leaderboard</h1>
+    <p id="id-home-desc">An repo-level AI coding competition platform, supported by <a
+            href="https://acm.sjtu.edu.cn/OnlineJudge/">ACMOJ</a>.</p>
+
+    <div id="id-leaderboard-header">
+        <h3 id="id-leaderboard-title">Leaderboard</h3>
+        <div id="id-search-container">
+            <input id="id-leaderboard-search" type="search" placeholder="搜索模型名..." />
+            <ul id="id-search-result"></ul>
+            <!-- js: 联想匹配填充 -->
+        </div>
+    </div>
+    <div id="id-leaderboard-table-container">
+        <table id="id-leaderboard-table">
+            <thead id="id-leaderboard-thead">
+                <tr>
+                    <th id="id-th-rank">名次</th>
+                    <th id="id-th-name">模型名</th>
+                    <th id="id-th-score">分数</th>
+                </tr>
+            </thead>
+            <tbody id="id-leaderboard-tbody">
+                <!-- TODO: 用后端渲染并分页显示30，每次展开加30 -->
+                <tr>
+                    <td>1</td>
+                    <td>Model-Alpha</td>
+                    <td>98.5</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Model-Beta</td>
+                    <td>96.4</td>
+                </tr>
+                <!-- ... -->
+            </tbody>
+        </table>
+        <button id="id-btn-expand" style="display: none;">展开更多</button>
+    </div>
+</section>
+{%endblock%}
