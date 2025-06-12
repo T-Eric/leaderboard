@@ -10,9 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
     sidebar.classList.toggle("collapsed");
     // Update toggle button icon (optional)
     if (sidebar.classList.contains("collapsed")) {
-      sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+      sidebarToggle.innerHTML = '<i class="fas fa-bars nav-icon"></i>';
     } else {
-      sidebarToggle.innerHTML = '<i class="fas fa-times"></i>'; // Change to a close icon
+      sidebarToggle.innerHTML = '<i class="fas fa-times nav-icon"></i>'; // Change to a close icon
     }
   });
 

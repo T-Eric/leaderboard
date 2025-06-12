@@ -19,7 +19,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
     /* 仅当未明确设置主题时 */
-    --bg-primary: #212529;
+    --bg-primary: #0f0f10;
     --bg-secondary: #343a40;
     --bg-sidebar: #1c1e22; /* 侧边栏可以更暗 */
     --text-primary: #f8f9fa;
@@ -44,7 +44,7 @@ html[data-theme="light"] {
 
 /* 夜间模式 (明确设置) */
 html[data-theme="dark"] {
-  --bg-primary: #212529;
+  --bg-primary: #0f0f10;
   --bg-secondary: #343a40;
   --bg-sidebar: #1c1e22;
   --text-primary: #f8f9fa;
@@ -104,10 +104,6 @@ body {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.nav-item {
-  /* no specific styles here, styling goes to <a> or <button> */
 }
 
 .nav-item a,

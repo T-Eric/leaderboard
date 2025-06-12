@@ -1,0 +1,230 @@
+.model-container {
+  max-width: 96%;
+  margin: 20px auto;
+  padding: 24px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: background-color var(--transition-speed),
+    color var(--transition-speed);
+  position: relative;
+  z-index: 100;
+}
+
+/* 主体内容层级保持低于 sidebar，避免浮层问题 */
+.main-content {
+  z-index: 100;
+}
+
+/* 标题 */
+.model-container h1 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+  color: var(--text-primary);
+}
+
+/* 模型信息卡片 */
+.model-info {
+  background-color: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 30px;
+}
+
+.model-info p {
+  margin: 8px 0;
+  color: var(--text-secondary);
+}
+
+/* 最佳提交卡片 */
+.best-submission {
+  background-color: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 30px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.best-submission h2 {
+  font-size: 1.4rem;
+  border-bottom: 2px solid var(--accent-color);
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.submission-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.submission-header p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* 表格通用样式 */
+.repo-scores-table,
+.submissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+}
+
+.repo-scores-table th,
+.repo-scores-table td,
+.submissions-table th,
+.submissions-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.repo-scores-table th,
+.submissions-table th {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.repo-scores-table tr:hover,
+.submissions-table tr:hover {
+  background-color: var(--bg-hover);
+}
+
+/* 状态颜色 */
+.status {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.status.accepted {
+  color: #28a745;
+}
+
+.status.wrong_answer {
+  color: #dc3545;
+}
+
+.status.time_limit_exceeded,
+.status.memory_limit_exceeded {
+  color: #fd7e14;
+}
+
+.status.runtime_error,
+.status.compile_error {
+  color: #e83e8c;
+}
+
+.status.pending,
+.status.compiling,
+.status.running {
+  color: #007bff;
+}
+
+/* 所有提交 */
+.submissions-list {
+  margin-bottom: 30px;
+}
+
+.submissions-list h2 {
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+/* 分页组件 */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  margin-top: 16px;
+  color: var(--text-secondary);
+}
+
+.pagination .btn {
+  font-size: 0.95rem;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background-color: var(--accent-color);
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.pagination .btn:hover {
+  background-color: #0056b3;
+}
+
+.current-page {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* 页面操作按钮 */
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.actions .btn {
+  padding: 10px 16px;
+  font-weight: 600;
+  background-color: var(--accent-color);
+  border-radius: 6px;
+  text-decoration: none;
+  color: #fff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.actions .btn:hover {
+  background-color: #0056b3;
+}
+
+.actions .btn.primary {
+  background-color: #28a745;
+}
+
+.actions .btn.primary:hover {
+  background-color: #218838;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .model-container {
+    padding: 16px;
+  }
+
+  .submission-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+/* 更低调的Organization样式 */
+.organization-badge {
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-left: 5px;
+}

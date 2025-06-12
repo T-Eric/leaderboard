@@ -1,0 +1,189 @@
+/* 提交页面容器对齐 main-content 的 padding 规则 */
+.submission-container {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  color: var(--text-primary);
+}
+
+/* 左侧提交表单卡片 */
+.submission-card,
+.recent-submissions {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color var(--transition-speed),
+    border-color var(--transition-speed);
+}
+
+.card-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-body {
+  padding: 20px 24px;
+}
+
+/* 表单 */
+.submission-form .form-group {
+  margin-bottom: 20px;
+}
+
+.submission-form label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.submission-form input,
+.submission-form select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-speed),
+    color var(--transition-speed), border-color var(--transition-speed);
+}
+
+.submission-form input:focus,
+.submission-form select:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.2);
+}
+
+.form-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.required {
+  color: var(--accent-color);
+}
+
+/* 提交按钮 */
+.submit-btn {
+  padding: 10px 18px;
+  font-size: 1rem;
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.submit-btn:hover {
+  background-color: #0056b3; /* 深一点的蓝（手动定义） */
+}
+
+/* 最近提交样式 */
+.recent-submissions {
+  padding: 0;
+}
+
+.submission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.submission-item {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.submission-item:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.submission-link {
+  display: block;
+  padding: 12px 18px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.submission-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+}
+
+.submission-model,
+.submission-problem,
+.submission-status {
+  font-size: 0.88rem;
+  margin-top: 2px;
+  color: var(--text-secondary);
+}
+
+.submission-status .badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.badge-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.score {
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.no-submissions {
+  padding: 12px 18px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* 强制所有输入控件撑满容器宽度 */
+.submission-form input[type="number"],
+.submission-form input[type="file"],
+.submission-form select {
+  width: 100%;
+  max-width: 100%; /* 避免撑破边框 */
+  box-sizing: border-box;
+}
+
+/* 限制卡片宽度不被撑破 */
+.submission-card,
+.recent-submissions {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* 修复 form-control-file 样式在不同浏览器表现不一致的问题 */
+input[type="file"].form-control-file {
+  padding: 6px 12px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 1rem;
+}

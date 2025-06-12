@@ -1,0 +1,240 @@
+/* add_model.css - 与submit.css风格保持一致 */
+
+/* 全局设置确保宽度计算正确 */
+* {
+    box-sizing: border-box;
+}
+
+/* 容器样式 */
+.add-model-container {
+    margin-top: 20px;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 15px;
+    color: var(--text-primary);
+}
+
+/* 卡片统一样式 */
+.add-model-card,
+.recent-models,
+.delete-model-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    transition: background-color var(--transition-speed),
+        border-color var(--transition-speed);
+}
+
+/* 卡片头部统一样式 */
+.add-model-card .card-header,
+.recent-models .card-header,
+.delete-model-card .card-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* 危险操作标题颜色 */
+.delete-model-card .card-header h2 {
+    margin: 0;
+    color: #f44336;
+}
+
+/* 卡片内容区域统一样式 */
+.add-model-card .card-body,
+.recent-models .card-body,
+.delete-model-card .card-body {
+    padding: 20px 24px;
+}
+
+/* 表单组样式 */
+.add-model-form .form-group,
+.delete-model-form .form-group {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* 表单标签样式 */
+.add-model-form label,
+.delete-model-form label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+/* 必填项标记 */
+.required {
+    color: var(--accent-color);
+}
+
+/* 表单控件样式 */
+.add-model-form .form-control,
+.delete-model-form .form-control {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color var(--transition-speed),
+        color var(--transition-speed), border-color var(--transition-speed);
+}
+
+/* 表单控件焦点状态 */
+.add-model-form .form-control:focus,
+.delete-model-form .form-control:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.2);
+}
+
+/* 文本区域样式 */
+.add-model-form textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* 表单辅助文本 */
+.form-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* 警告文本 */
+.warning-text {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* 按钮基础样式 */
+.add-model-form .btn,
+.delete-model-form .btn {
+    padding: 10px 18px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* 主要按钮样式 */
+.add-model-form .btn-primary {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+.add-model-form .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* 次要按钮样式 */
+.add-model-form .btn-secondary {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    margin-left: 10px;
+}
+
+.add-model-form .btn-secondary:hover {
+    background-color: var(--border-color);
+}
+
+/* 危险操作按钮 */
+.delete-model-form .btn-danger {
+    background-color: #f44336;
+    color: white;
+}
+
+.delete-model-form .btn-danger:hover {
+    background-color: #d32f2f;
+}
+
+/* 模型列表样式 */
+.model-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.model-item {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.model-item:last-child {
+    border-bottom: none;
+}
+
+.model-link {
+    display: block;
+    padding: 12px 18px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.model-link:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* 模型信息样式 */
+.model-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.model-organization {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+    font-style: italic;
+}
+
+.model-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.no-models {
+    padding: 12px 18px;
+    color: var(--text-secondary);
+    text-align: center;
+    font-style: italic;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .add-model-container {
+        padding: 10px;
+    }
+    
+    .add-model-card .card-header,
+    .recent-models .card-header,
+    .delete-model-card .card-header {
+        padding: 12px 18px;
+    }
+    
+    .add-model-card .card-body,
+    .recent-models .card-body,
+    .delete-model-card .card-body {
+        padding: 15px 18px;
+    }
+    
+    .model-link {
+        padding: 10px 15px;
+    }
+}

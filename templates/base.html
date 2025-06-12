@@ -3,7 +3,7 @@
 
     <head>
         <meta charset="UTF-8">
-        <title id="title">网站标题</title>
+        <title id="title">OJBench LeaderBoard</title>
         <link rel="favicon" href="{{url_for('static', filename='favicon.ico')}}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" type="text/css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,37 +27,37 @@
                         <li class="nav-item">
                             <a href="{{url_for('index')}}">
                                 <i class="fas fa-home nav-icon"></i>
-                                <span class="nav-text">首页</span>
+                                <span class="nav-text">Home</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{url_for('submit')}}">
                                 <i class="fas fa-tachometer-alt nav-icon"></i>
-                                <span class="nav-text">提交</span>
+                                <span class="nav-text">Submit</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{url_for('add_model')}}">
+                                <i class="fas fa-plus-circle nav-icon"></i>
+                                <span class="nav-text">Add Model</span>
                             </a>
                         </li>
                     </ul>
 
                     <ul class="nav-list nav-list-bottom">
-                        {# <li class="nav-item">
-                            <a href="{{url_for('settings')}}">
-                                <i class="fas fa-cog nav-icon"></i>
-                                <span class="nav-text">设置</span>
+                        <li class="nav-item">
+                            <a href="https://github.com/XsystemH/ACM-Benchmark" target="_blank"
+                                rel="noopener noreferrer" aria-label="访问我们的 Git 仓库">
+                                <i class="fab fa-github nav-icon"></i> <!-- 使用 Font Awesome 的 Git 图标 -->
+                                <span class="nav-text">Git Repo</span>
                             </a>
-                        </li> #}
+                        </li>
                         <li class="nav-item">
                             <button id="theme-toggle-button" class="theme-button">
                                 <i class="fas fa-adjust nav-icon"></i>
-                                <span class="nav-text">切换样式</span>
+                                <span class="nav-text">Switch Theme</span>
                             </button>
                         </li>
-                        {# if current_user.is_authenticated #}
-                        {# <li class="nav-item">
-                            <a href="{{url_for('logout')}}'">
-                                <i class="fas fa-user-circle nav-icon"></i> <!--应当是用户头像-->
-                                <span class="nav-text">登录</span>
-                            </a>
-                        </li> #}
                     </ul>
                 </div>
             </aside>
@@ -69,24 +69,25 @@
                 <footer class="footer">
                     <small>
                         &copy; 2025 CS2916
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/">ACMOJ</a>|<a href="https://ji-z.net/">Stargazer's
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/">ACMOJ</a> | <a
+                            href="https://ji-z.net/">Stargazer's
                             Blog</a>
                     </small>
                 </footer>
             </div>
         </div>
         <!-- 悬浮操作按钮（右下或右侧） -->
-        <div id="ifloat-buttons">
+        <div id="float-buttons">
             <button id="btn-top" title="回到顶部">
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
                     <path d="M14 22V6M14 6l-7 7M14 6l7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" />
                 </svg>
             </button>
-            <!-- 其它悬浮按钮可后续添加 -->
         </div>
     </body>
 
     <script src="static/js/base.js"></script>
+    {% block extra_js %}{% endblock %}
 
 </html>

@@ -1,5 +1,92 @@
 {% extends 'base.html' %}
 
-{% block content %}
+{% block title %}Submit!{% endblock %}
 
-{% endblock%}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container submission-container">
+    <div class="row">
+        <!-- 表单部分 -->
+        <div class="col-md-8">
+            <div class="card submission-card">
+                <div class="card-header">
+                    <h2>Go for one shot</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('submit') }}" class="submission-form"
+                        enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="model_id">Select a model <span class="required">*</span></label>
+                            <select name="model_id" id="model_id" class="form-control" required>
+                                <option value="">-- Please select a model --</option>
+                                {% for model in models %}
+                                <option value="{{ model.id }}" {% if selected_model_id and selected_model_id==model.id
+                                    %}selected{% endif %}>
+                                    {{ model.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="zip_file">Upload a ZIP file <span class="required">*</span></label>
+                            <input type="file" class="form-control-file" id="zip_file" name="zip_file" accept=".zip"
+                                required>
+                            <small class="form-text text-muted">Please select a .zip file that contains the Basic, Book,
+                                ICPC, Minesweeper, Python, and Ticket repositories.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary submit-btn">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近提交部分 -->
+        <div class="col-md-4">
+            <div class="card recent-submissions">
+                <div class="card-header">
+                    <h3>Recent submissions</h3>
+                </div>
+                <div class="card-body">
+                    {% if submissions %}
+                    <ul class="submission-list">
+                        {% for submission in submissions %}
+                        <li class="submission-item">
+                            <a href="{{ url_for('submission_detail', submission_id=submission.id) }}"
+                                class="submission-link">
+                                <div class="submission-header">
+                                    <span class="submission-id">#{{ submission.id }}</span>
+                                    <span class="submission-time">{{ submission.submission_time.strftime('%Y-%m-%d
+                                        %H:%M') }}</span>
+                                </div>
+                                <div class="submission-model">Model: {{ submission.model.name }}</div>
+                                {% if submission.problem_id %}
+                                <div class="submission-problem">Problem: {{ submission.problem_id }}</div>
+                                {% endif %}
+                                <div class="submission-status">
+                                    {% if submission.score is not none %}
+                                    <span class="badge badge-success">Completed</span>
+                                    <span class="score">Score: {{ "%.2f"|format(submission.score) }}</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary">Processing...</span>
+                                    {% endif %}
+                                </div>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="no-submissions">No submissions yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

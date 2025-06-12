@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Submission #{{ submission.id }} - LeaderBoard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submission_detail.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="submission-container">
+    <h1>Submission #{{ submission.id }}</h1>
+
+    <div class="submission-info">
+        <p><strong>Model:</strong> {{ submission.model.name }}</p>
+        <p><strong>Submit Time:</strong> {{ submission.submission_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        <p><strong>Total Score:</strong> {% if submission.score %}{{ "%.2f"|format(submission.score) }}{% else %}Evaluating...{% endif
+            %}</p>
+    </div>
+
+    <div class="repositories-status">
+        <h2>Repo Status</h2>
+        <table class="status-table">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>OJ ID</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Basic (2510)</td>
+                    <td>{% if submission.basic_submission_id %}
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.basic_submission_id }}/"
+                            target="_blank">
+                            {{ submission.basic_submission_id }}
+                        </a>
+                        {% else %}Not Submitted{% endif %}
+                    </td>
+                    <td class="status {{ submission.basic_status|lower if submission.basic_status else '' }}">
+                        {{ submission.basic_status or 'Waiting...' }}
+                    </td>
+                    <td>{{ "%.2f"|format(submission.basic_score) if submission.basic_score else 'Not Scored' }}</td>
+                </tr>
+                <tr>
+                    <td>Book (1075)</td>
+                    <td>{% if submission.book_submission_id %}
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.book_submission_id }}/"
+                            target="_blank">
+                            {{ submission.book_submission_id }}
+                        </a>
+                        {% else %}Not Submitted{% endif %}
+                    </td>
+                    <td class="status {{ submission.book_status|lower if submission.book_status else '' }}">
+                        {{ submission.book_status or 'Waiting...' }}
+                    </td>
+                    <td>{{ "%.2f"|format(submission.book_score) if submission.book_score else 'Not Scored' }}</td>
+                </tr>
+                <tr>
+                    <td>Book (1775)</td>
+                    <td>{% if submission.book_second_submission_id %}
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.book_second_submission_id }}/"
+                            target="_blank">
+                            {{ submission.book_second_submission_id }}
+                        </a>
+                        {% else %}Not Submitted{% endif %}
+                    </td>
+                    <td
+                        class="status {{ submission.book_second_status|lower if submission.book_second_status else '' }}">
+                        {{ submission.book_second_status or 'Waiting...' }}
+                    </td>
+                    <td>{{ "%.2f"|format(submission.book_second_score) if submission.book_second_score else 'Not Scored' }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>ICPC (1986)</td>
+                    <td>{% if submission.icpc_submission_id %}
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.icpc_submission_id }}/"
+                            target="_blank">
+                            {{ submission.icpc_submission_id }}
+                        </a>
+                        {% else %}Not Submitted{% endif %}
+                    </td>
+                    <td class="status {{ submission.icpc_status|lower if submission.icpc_status else '' }}">
+                        {{ submission.icpc_status or 'Waiting...' }}
+                    </td>
+                    <td>{{ "%.2f"|format(submission.icpc_score) if submission.icpc_score else 'Not Scored' }}</td>
+                </tr>
+                <tr>
+                    <td>Minesweeper (2395)</td>
+                    <td>{% if submission.minesweeper_submission_id %}
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.minesweeper_submission_id }}/"
+                            target="_blank">
+                            {{ submission.minesweeper_submission_id }}
+                        </a>
+                        {% else %}Not Submitted{% endif %}
+                    </td>
+                    <td
+                        class="status {{ submission.minesweeper_status|lower if submission.minesweeper_status else '' }}">
+                        {{ submission.minesweeper_status or 'Waiting...' }}
+                    </td>
+                    <td>{{ "%.2f"|format(submission.minesweeper_score) if submission.minesweeper_score else 'Not Scored' }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Python (2515)</td>
+                    <td>{% if submission.python_submission_id %}
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.python_submission_id }}/"
+                            target="_blank">
+                            {{ submission.python_submission_id }}
+                        </a>
+                        {% else %}Not Submitted{% endif %}
+                    </td>
+                    <td class="status {{ submission.python_status|lower if submission.python_status else '' }}">
+                        {{ submission.python_status or 'Waiting...' }}
+                    </td>
+                    <td>{{ "%.2f"|format(submission.python_score) if submission.python_score else 'Not Scored' }}</td>
+                </tr>
+                <tr>
+                    <td>Ticket (1867)</td>
+                    <td>{% if submission.ticket_submission_id %}
+                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.ticket_submission_id }}/"
+                            target="_blank">
+                            {{ submission.ticket_submission_id }}
+                        </a>
+                        {% else %}Not Submitted{% endif %}
+                    </td>
+                    <td class="status {{ submission.ticket_status|lower if submission.ticket_status else '' }}">
+                        {{ submission.ticket_status or 'Waiting...' }}
+                    </td>
+                    <td>{{ "%.2f"|format(submission.ticket_score) if submission.ticket_score else 'Not Scored' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="submission-details">
+        <h2>Details</h2>
+        <pre>{{ submission.details }}</pre>
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('index') }}" class="btn">Back to Home</a>
+        <a href="{{ url_for('submit') }}" class="btn">New Submission</a>
+        <a href="{{ url_for('submission_detail', submission_id=submission.id) }}" class="btn refresh">Refresh</a>
+    </div>
+</div>
+{% endblock %}

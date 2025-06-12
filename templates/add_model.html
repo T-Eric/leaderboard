@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Models{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/add_model.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container add-model-container">
+    <div class="card add-model-card">
+        <div class="card-header">
+            <h2>Add a Model</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_model') }}" class="add-model-form">
+                <div class="form-group">
+                    <label for="name">Model Name <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" required
+                        placeholder="Please enter model name" maxlength="32">
+                    <small class="form-text text-muted">Model name in 32 letters</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="organization">Organization</label>
+                    <input type="text" class="form-control" id="organization" name="organization"
+                        placeholder="Please enter organization or team name" maxlength="64">
+                    <small class="form-text text-muted">Organization or team name in 64 letters</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Model Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"
+                        placeholder="Please enter model description" maxlength="128"></textarea>
+                    <small class="form-text text-muted">Sth about the model, 128 letters</small>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary submit-btn">Add</button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Return Home</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card recent-models">
+        <div class="card-header">
+            <h3>Recently Added Models</h3>
+        </div>
+        <div class="card-body">
+            <div class="model-list">
+                {% if recent_models %}
+                <ul class="model-items">
+                    {% for model in recent_models %}
+                    <li class="model-item">
+                        <a href="{{ url_for('model_detail', model_id=model.id) }}" class="model-link">
+                            <div class="model-name">{{ model.name }}</div>
+                            {% if model.organization %}
+                            <div class="model-organization">Org: {{ model.organization }}</div>
+                            {% endif %}
+                            <div class="model-description">{{ model.description }}</div>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="no-models">No any models added yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add delete model functionality -->
+    <div class="card delete-model-card">
+        <div class="card-header">
+            <h2>Delete Model</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('delete_model') }}" class="delete-model-form"
+                onsubmit="return confirmDelete()">
+                <div class="form-group">
+                    <label for="delete_model_id">Select the model to delete <span class="required">*</span></label>
+                    <select name="delete_model_id" id="delete_model_id" class="form-control" required>
+                        <option value="">-- To-be-deleted Model --</option>
+                        {% for model in all_models %}
+                        <option value="{{ model.id }}">
+                            {{ model.name }}{% if model.organization %} ({{ model.organization }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted warning-text">Warning: All submissions of this model will be
+                        deleted as well! </small>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-danger delete-btn">Delete!</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 添加确认删除的JavaScript -->
+<script>
+    function confirmDelete() {
+        return confirm("Destined to delete this model? Think twice!");
+    }
+</script>
+{% endblock %}
