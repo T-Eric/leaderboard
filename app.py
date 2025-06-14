@@ -12,10 +12,15 @@ from werkzeug.utils import secure_filename
 import sys
 import os
 import click
+from dotenv import load_dotenv
+
+# 加载.env文件中的环境变量
+load_dotenv()
 
 # init
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'thisisasecretkey'  # TODO 暂时没有dotenv配置
+app.config['SECRET_KEY'] = os.getenv(
+    'SECRET_KEY', 'thisisasecretkey')  # 如果.env中没有则使用默认值
 app.config['SQLALCHEMY_DATABASE_URI'] = ('sqlite:///' if sys.platform.startswith(
     'win') else 'sqlite:////') + os.path.join(app.root_path, 'data.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -25,8 +30,11 @@ db = SQLAlchemy(app)
 # login_manager = LoginManager(app)
 # login_manager.login_view = 'login'
 
-SERVER_IP = '10.181.70.149'
-OJ_TOKEN = 'acmoj-9b00d190090e0303fc684d1341e9918d'
+SERVER_IP = os.getenv('SERVER_IP')
+OJ_TOKEN = os.getenv('OJ_TOKEN')
+
+if not SERVER_IP or not OJ_TOKEN:
+    raise EnvironmentError("Env variables 'SERVER_IP' and 'OJ_TOKEN' are required.")
 
 # 仓库类型和题目ID的映射关系
 REPOSITORY_PROBLEM_MAPPING = {
@@ -851,7 +859,114 @@ def delete_model():
         db.session.rollback()
         flash(f'删除模型失败: {str(e)}', 'error')
 
-    return redirect(url_for('add_model'))   
+    return redirect(url_for('add_model'))
+
+
+@app.route('/task_detail/<string:task_type>/<int:oj_submission_id>')
+def task_detail(task_type, oj_submission_id):
+    """显示单个任务的评测详情"""
+    submission_id = request.args.get('submission_id', type=int)
+
+    try:
+        # 调用 ACMOJ API 获取提交详情
+        response = requests.get(
+            f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/submission/{oj_submission_id}",
+            headers={
+                'accept': 'application/json',
+                'Authorization': f'Bearer {OJ_TOKEN}'
+            }
+        )
+
+        if response.status_code != 200:
+            flash(f"无法获取任务详情: {response.status_code}", "error")
+            if submission_id:
+                return redirect(url_for('submission_detail', submission_id=submission_id))
+            return redirect(url_for('index'))
+
+        task_data = response.json()
+
+        # 确保资源使用数据存在，防止模板渲染错误
+        if 'details' in task_data and task_data['details'] is not None:
+            details = task_data['details']
+
+            # 检查并确保groups存在
+            if 'groups' in details and details['groups'] is not None:
+                for group in details['groups']:
+                    if 'testpoints' in group and group['testpoints'] is not None:
+                        for testpoint in group['testpoints']:
+                            # 确保resource_usage存在且不为None
+                            if 'resource_usage' not in testpoint or testpoint['resource_usage'] is None:
+                                testpoint['resource_usage'] = {
+                                    'time_msecs': None,
+                                    'memory_bytes': None,
+                                    'file_count': None,
+                                    'file_size_bytes': None
+                                }
+
+        # 获取本地提交信息，用于导航返回
+        submission = None
+        if submission_id:
+            submission = Submission.query.get(submission_id)
+
+        # 获取任务类型显示名称
+        task_display_names = {
+            'basic': 'Basic Interpreter',
+            'book': 'Book Management',
+            'icpc': 'ICPC Database',
+            'minesweeper': 'Minesweeper',
+            'python': 'Python Interpreter',
+            'ticket': 'Ticket System'
+        }
+
+        task_display_name = task_display_names.get(
+            task_type, task_type.capitalize())
+
+        return render_template(
+            'task_detail.html',
+            task_data=task_data,
+            task_type=task_type,
+            task_display_name=task_display_name,
+            submission=submission,
+            oj_submission_id=oj_submission_id
+        )
+    except Exception as e:
+        flash(f"获取任务详情时出错: {str(e)}", "error")
+        if submission_id:
+            return redirect(url_for('submission_detail', submission_id=submission_id))
+        return redirect(url_for('index'))
+
+
+@app.route('/api/task_detail/<int:task_id>')
+def api_task_detail(task_id):
+    """
+    API端点，代理转发评测网站的提交详情请求
+    直接返回评测网站API的原始JSON响应
+    """
+    try:
+        # 向评测网站API发送请求
+        response = requests.get(
+            f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/submission/{task_id}",
+            headers={
+                'accept': 'application/json',
+                'Authorization': f'Bearer {OJ_TOKEN}'
+            }
+        )
+
+        # 获取原始响应数据
+        data = response.json()
+
+        # 设置响应状态码与原API保持一致
+        status_code = response.status_code
+
+        # 直接返回从评测网站获取的JSON数据
+        return jsonify(data), status_code
+
+    except Exception as e:
+        error_response = {
+            'error': 'Failed to fetch data from evaluation site',
+            'message': str(e)
+        }
+        return jsonify(error_response), 500
 
 
 @app.cli.command("initdb")
@@ -862,6 +977,7 @@ def initdb_command():
     if not get_model_by_name("test"):
         create_model("test", "Empty test model")
     click.echo("Database initialization complete!")
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -13,7 +13,8 @@
     <div class="submission-info">
         <p><strong>Model:</strong> {{ submission.model.name }}</p>
         <p><strong>Submit Time:</strong> {{ submission.submission_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-        <p><strong>Total Score:</strong> {% if submission.score %}{{ "%.2f"|format(submission.score) }}{% else %}Evaluating...{% endif
+        <p><strong>Total Score:</strong> {% if submission.score %}{{ "%.2f"|format(submission.score) }}{% else
+            %}Evaluating...{% endif
             %}</p>
     </div>
 
@@ -32,7 +33,7 @@
                 <tr>
                     <td>Basic (2510)</td>
                     <td>{% if submission.basic_submission_id %}
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.basic_submission_id }}/"
+                        <a href="{{ url_for('task_detail', task_type='basic', oj_submission_id=submission.basic_submission_id, submission_id=submission.id) }}"
                             target="_blank">
                             {{ submission.basic_submission_id }}
                         </a>
@@ -46,12 +47,13 @@
                 <tr>
                     <td>Book (1075)</td>
                     <td>{% if submission.book_submission_id %}
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.book_submission_id }}/"
-                            target="_blank">
+                        <a
+                            href="{{ url_for('task_detail', task_type='book', oj_submission_id=submission.book_submission_id, submission_id=submission.id) }}">
                             {{ submission.book_submission_id }}
                         </a>
                         {% else %}Not Submitted{% endif %}
                     </td>
+
                     <td class="status {{ submission.book_status|lower if submission.book_status else '' }}">
                         {{ submission.book_status or 'Waiting...' }}
                     </td>
@@ -60,8 +62,8 @@
                 <tr>
                     <td>Book (1775)</td>
                     <td>{% if submission.book_second_submission_id %}
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.book_second_submission_id }}/"
-                            target="_blank">
+                        <a
+                            href="{{ url_for('task_detail', task_type='book', oj_submission_id=submission.book_second_submission_id, submission_id=submission.id) }}">
                             {{ submission.book_second_submission_id }}
                         </a>
                         {% else %}Not Submitted{% endif %}
@@ -70,14 +72,15 @@
                         class="status {{ submission.book_second_status|lower if submission.book_second_status else '' }}">
                         {{ submission.book_second_status or 'Waiting...' }}
                     </td>
-                    <td>{{ "%.2f"|format(submission.book_second_score) if submission.book_second_score else 'Not Scored' }}
+                    <td>{{ "%.2f"|format(submission.book_second_score) if submission.book_second_score else 'Not Scored'
+                        }}
                     </td>
                 </tr>
                 <tr>
                     <td>ICPC (1986)</td>
                     <td>{% if submission.icpc_submission_id %}
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.icpc_submission_id }}/"
-                            target="_blank">
+                        <a
+                            href="{{ url_for('task_detail', task_type='icpc', oj_submission_id=submission.icpc_submission_id, submission_id=submission.id) }}">
                             {{ submission.icpc_submission_id }}
                         </a>
                         {% else %}Not Submitted{% endif %}
@@ -90,8 +93,8 @@
                 <tr>
                     <td>Minesweeper (2395)</td>
                     <td>{% if submission.minesweeper_submission_id %}
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.minesweeper_submission_id }}/"
-                            target="_blank">
+                        <a
+                            href="{{ url_for('task_detail', task_type='minesweeper', oj_submission_id=submission.minesweeper_submission_id, submission_id=submission.id) }}">
                             {{ submission.minesweeper_submission_id }}
                         </a>
                         {% else %}Not Submitted{% endif %}
@@ -100,14 +103,15 @@
                         class="status {{ submission.minesweeper_status|lower if submission.minesweeper_status else '' }}">
                         {{ submission.minesweeper_status or 'Waiting...' }}
                     </td>
-                    <td>{{ "%.2f"|format(submission.minesweeper_score) if submission.minesweeper_score else 'Not Scored' }}
+                    <td>{{ "%.2f"|format(submission.minesweeper_score) if submission.minesweeper_score else 'Not Scored'
+                        }}
                     </td>
                 </tr>
                 <tr>
                     <td>Python (2515)</td>
                     <td>{% if submission.python_submission_id %}
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.python_submission_id }}/"
-                            target="_blank">
+                        <a
+                            href="{{ url_for('task_detail', task_type='python', oj_submission_id=submission.python_submission_id, submission_id=submission.id) }}">
                             {{ submission.python_submission_id }}
                         </a>
                         {% else %}Not Submitted{% endif %}
@@ -120,8 +124,8 @@
                 <tr>
                     <td>Ticket (1867)</td>
                     <td>{% if submission.ticket_submission_id %}
-                        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ submission.ticket_submission_id }}/"
-                            target="_blank">
+                        <a
+                            href="{{ url_for('task_detail', task_type='ticket', oj_submission_id=submission.ticket_submission_id, submission_id=submission.id) }}">
                             {{ submission.ticket_submission_id }}
                         </a>
                         {% else %}Not Submitted{% endif %}

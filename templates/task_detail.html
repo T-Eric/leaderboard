@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task_display_name }} #{{ oj_submission_id }} - LeaderBoard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/task_detail.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="task-container">
+    <h1>{{ task_display_name }} Task #{{ oj_submission_id }}</h1>
+
+    <div class="task-info">
+        <div class="info-item">
+            <span class="info-label">Task:</span>
+            <a href="https://acm.sjtu.edu.cn{{ task_data.problem.html_url }}" target="_blank" class="problem-link">
+                {{ task_data.problem.title }}
+            </a>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Status:</span>
+            <span class="status {{ task_data.status|lower }}">{{ task_data.status|upper }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Score:</span>
+            <span class="score">{{ task_data.score }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Language:</span>
+            {{ task_data.language|upper }}
+        </div>
+        <div class="info-item">
+            <span class="info-label">Submission Time:</span>
+            {{ task_data.created_at.split('T')[0] }} {{ task_data.created_at.split('T')[1].split('.')[0] }}
+        </div>
+    </div>
+
+    <div class="resource-usage">
+        <h2>Resource Usage</h2>
+        <div class="resource-grid">
+            <div class="resource-item">
+                <div class="resource-value">
+                    {% if task_data.time_msecs is not none %}
+                    {{ task_data.time_msecs }} ms
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </div>
+                <div class="resource-label">Runtime:</div>
+            </div>
+            <div class="resource-item">
+                <div class="resource-value">
+                    {% if task_data.memory_bytes is not none %}
+                    {{ (task_data.memory_bytes / 1024 / 1024)|round(2) }} MB
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </div>
+                <div class="resource-label">Memory Usage:</div>
+            </div>
+        </div>
+    </div>
+
+    {% if task_data.message %}
+    <div class="compiler-message">
+        <h2>Compiler Message</h2>
+        <pre>{{ task_data.message }}</pre>
+    </div>
+    {% endif %}
+
+    {% if task_data.details and task_data.details.get('groups') %}
+    <div class="testcase-groups">
+        <h2>Testcase Groups</h2>
+
+        {% for group in task_data.details.groups %}
+        <div class="testcase-group">
+            <div class="group-header">
+                <div class="group-title">
+                    Testcase Group {{ group.id }}{% if group.name %}: {{ group.name }}{% endif %}
+                </div>
+                <div class="group-info">
+                    <span class="status {{ group.result|lower }}">{{ group.result|upper }}</span>
+                    <span class="group-score">Score: {{ group.score }}</span>
+                </div>
+            </div>
+
+            <table class="testcase-table">
+                <thead>
+                    <tr>
+                        <th>Testcase</th>
+                        <th>Result</th>
+                        <th>Runtime</th>
+                        <th>Memory Usage</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for testpoint in group.testpoints %}
+                    <tr>
+                        <td>{{ testpoint.id }}</td>
+                        <td class="status {{ testpoint.result|lower }}">{{ testpoint.result|upper }}</td>
+                        <td>
+                            {% if testpoint.resource_usage.time_msecs is not none %}
+                            {{ testpoint.resource_usage.time_msecs }} ms
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if testpoint.resource_usage.memory_bytes is not none %}
+                            {{ (testpoint.resource_usage.memory_bytes / 1024 / 1024)|round(2) }} MB
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </td>
+                        <td>{{ testpoint.score }}</td>
+                    </tr>
+                    {% if testpoint.message %}
+                    <tr class="testcase-message">
+                        <td colspan="5">
+                            <pre>{{ testpoint.message }}</pre>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="actions">
+        {% if submission %}
+        <a href="{{ url_for('submission_detail', submission_id=submission.id) }}" class="btn">Submission Detail</a>
+        {% else %}
+        <a href="{{ url_for('index') }}" class="btn">Return Home</a>
+        {% endif %}
+        <a href="{{ url_for('task_detail', task_type=task_type, oj_submission_id=oj_submission_id, submission_id=submission.id if submission else None) }}"
+            class="btn refresh">Refresh</a>
+        <a href="https://acm.sjtu.edu.cn/OnlineJudge/code/{{ oj_submission_id }}/" target="_blank"
+            class="btn external">View in OJ</a>
+    </div>
+</div>
+{% endblock %}

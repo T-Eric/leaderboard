@@ -1,3 +1,42 @@
+/* 定义主题特定状态颜色 */
+:root {
+  /* 状态颜色 - 日间模式 */
+  --status-success: #28a745;
+  --status-error: #dc3545;
+  --status-warning: #fd7e14;
+  --status-critical: #e83e8c;
+  --status-info: #007bff;
+
+  --accent-hover: #0056b3;
+  --status-success-hover: #218838;
+}
+
+/* 夜间模式状态颜色调整 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --status-success: #2dce54;
+    --status-error: #e74c3c;
+    --status-warning: #f39c12;
+    --status-critical: #ff3898;
+    --status-info: #3498db;
+
+    --accent-hover: #3572b0;
+    --status-success-hover: #25a244;
+  }
+}
+
+/* 明确设置的夜间模式 */
+html[data-theme="dark"] {
+  --status-success: #2dce54;
+  --status-error: #e74c3c;
+  --status-warning: #f39c12;
+  --status-critical: #ff3898;
+  --status-info: #3498db;
+
+  --accent-hover: #3572b0;
+  --status-success-hover: #25a244;
+}
+
 .model-container {
   max-width: 96%;
   margin: 20px auto;
@@ -25,6 +64,8 @@
   border-bottom: 2px solid var(--border-color);
   padding-bottom: 10px;
   color: var(--text-primary);
+  transition: color var(--transition-speed),
+    border-color var(--transition-speed);
 }
 
 /* 模型信息卡片 */
@@ -34,11 +75,14 @@
   border-radius: 8px;
   border: 1px solid var(--border-color);
   margin-bottom: 30px;
+  transition: background-color var(--transition-speed),
+    border-color var(--transition-speed);
 }
 
 .model-info p {
   margin: 8px 0;
   color: var(--text-secondary);
+  transition: color var(--transition-speed);
 }
 
 /* 最佳提交卡片 */
@@ -49,6 +93,8 @@
   border: 1px solid var(--border-color);
   margin-bottom: 30px;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  transition: background-color var(--transition-speed),
+    border-color var(--transition-speed);
 }
 
 .best-submission h2 {
@@ -57,6 +103,8 @@
   margin-bottom: 16px;
   padding-bottom: 6px;
   color: var(--text-primary);
+  transition: color var(--transition-speed),
+    border-color var(--transition-speed);
 }
 
 .submission-header {
@@ -69,6 +117,7 @@
 .submission-header p {
   margin: 0;
   color: var(--text-secondary);
+  transition: color var(--transition-speed);
 }
 
 /* 表格通用样式 */
@@ -79,6 +128,8 @@
   margin-bottom: 20px;
   border: 1px solid var(--border-color);
   background-color: var(--bg-primary);
+  transition: background-color var(--transition-speed),
+    border-color var(--transition-speed);
 }
 
 .repo-scores-table th,
@@ -89,6 +140,8 @@
   border-bottom: 1px solid var(--border-color);
   text-align: left;
   color: var(--text-primary);
+  transition: color var(--transition-speed),
+    border-color var(--transition-speed);
 }
 
 .repo-scores-table th,
@@ -96,11 +149,14 @@
   background-color: var(--bg-secondary);
   font-weight: 600;
   color: var(--text-primary);
+  transition: background-color var(--transition-speed),
+    color var(--transition-speed);
 }
 
 .repo-scores-table tr:hover,
 .submissions-table tr:hover {
-  background-color: var(--bg-hover);
+  background-color: var(--bg-secondary);
+  transition: background-color var(--transition-speed);
 }
 
 /* 状态颜色 */
@@ -110,27 +166,27 @@
 }
 
 .status.accepted {
-  color: #28a745;
+  color: var(--status-success);
 }
 
 .status.wrong_answer {
-  color: #dc3545;
+  color: var(--status-error);
 }
 
 .status.time_limit_exceeded,
 .status.memory_limit_exceeded {
-  color: #fd7e14;
+  color: var(--status-warning);
 }
 
 .status.runtime_error,
 .status.compile_error {
-  color: #e83e8c;
+  color: var(--status-critical);
 }
 
 .status.pending,
 .status.compiling,
 .status.running {
-  color: #007bff;
+  color: var(--status-info);
 }
 
 /* 所有提交 */
@@ -142,6 +198,7 @@
   font-size: 1.4rem;
   margin-bottom: 16px;
   color: var(--text-primary);
+  transition: color var(--transition-speed);
 }
 
 /* 分页组件 */
@@ -155,6 +212,8 @@
   background-color: var(--bg-secondary);
   margin-top: 16px;
   color: var(--text-secondary);
+  transition: background-color var(--transition-speed),
+    color var(--transition-speed), border-color var(--transition-speed);
 }
 
 .pagination .btn {
@@ -162,13 +221,13 @@
   padding: 8px 14px;
   border-radius: 6px;
   background-color: var(--accent-color);
-  color: #fff;
+  color: #fff; /* 按钮文字保持白色，确保在所有主题下都可读 */
   text-decoration: none;
   transition: background-color 0.2s ease-in-out;
 }
 
 .pagination .btn:hover {
-  background-color: #0056b3;
+  background-color: var(--accent-hover);
 }
 
 .current-page {
@@ -190,20 +249,20 @@
   background-color: var(--accent-color);
   border-radius: 6px;
   text-decoration: none;
-  color: #fff;
+  color: #fff; /* 按钮文字保持白色，确保在所有主题下都可读 */
   transition: background-color 0.2s ease-in-out;
 }
 
 .actions .btn:hover {
-  background-color: #0056b3;
+  background-color: var(--accent-hover);
 }
 
 .actions .btn.primary {
-  background-color: #28a745;
+  background-color: var(--status-success);
 }
 
 .actions .btn.primary:hover {
-  background-color: #218838;
+  background-color: var(--status-success-hover);
 }
 
 /* 响应式布局 */
@@ -222,9 +281,11 @@
     align-items: stretch;
   }
 }
+
 /* 更低调的Organization样式 */
 .organization-badge {
   color: var(--text-secondary);
   font-style: italic;
   margin-left: 5px;
+  transition: color var(--transition-speed);
 }
