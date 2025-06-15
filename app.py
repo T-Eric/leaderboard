@@ -27,14 +27,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# login_manager = LoginManager(app)
-# login_manager.login_view = 'login'
-
 SERVER_IP = os.getenv('SERVER_IP')
 OJ_TOKEN = os.getenv('OJ_TOKEN')
 
 if not SERVER_IP or not OJ_TOKEN:
-    raise EnvironmentError("Env variables 'SERVER_IP' and 'OJ_TOKEN' are required.")
+    raise EnvironmentError(
+        "Env variables 'SERVER_IP' and 'OJ_TOKEN' are required.")
 
 # 仓库类型和题目ID的映射关系
 REPOSITORY_PROBLEM_MAPPING = {
@@ -212,151 +210,165 @@ class GitDaemonManager:
 
 
 def extract_zip_flat(zip_path, extract_to):
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        # 获取 zip 内所有文件路径
-        members = zip_ref.namelist()
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # 获取 zip 内所有文件路径
+            members = zip_ref.namelist()
 
-        # 自动识别 zip 中的"公共前缀"路径，即顶层目录
-        common_prefix = os.path.commonprefix(members)
-        if not common_prefix.endswith('/'):
-            # 若只是文件名前缀，不是路径，改成路径形式
-            common_prefix = os.path.dirname(common_prefix) + '/'
+            # 自动识别 zip 中的"公共前缀"路径，即顶层目录
+            common_prefix = os.path.commonprefix(members)
+            if not common_prefix.endswith('/'):
+                # 若只是文件名前缀，不是路径，改成路径形式
+                common_prefix = os.path.dirname(common_prefix) + '/'
 
-        for member in members:
-            # 去掉顶层路径前缀
-            member_rel_path = member[len(common_prefix):] if member.startswith(
-                common_prefix) else member
+            for member in members:
+                # 去掉顶层路径前缀
+                member_rel_path = member[len(common_prefix):] if member.startswith(
+                    common_prefix) else member
 
-            if member_rel_path:
-                target_path = os.path.join(extract_to, member_rel_path)
+                if member_rel_path:
+                    target_path = os.path.join(extract_to, member_rel_path)
 
-                if member.endswith('/'):
-                    os.makedirs(target_path, exist_ok=True)
-                else:
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                    with zip_ref.open(member) as source, open(target_path, 'wb') as target:
-                        target.write(source.read())
+                    if member.endswith('/'):
+                        os.makedirs(target_path, exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(
+                            target_path), exist_ok=True)
+                        with zip_ref.open(member) as source, open(target_path, 'wb') as target:
+                            target.write(source.read())
+    except (zipfile.BadZipFile, OSError, IOError) as e:
+        raise Exception(f"提取ZIP文件时出错: {str(e)}")
 
 
 def check_submission_status(submission_id):
     """
     定期检查提交状态，监控OJ评测结果，当所有仓库不再处于pending或compiling状态后关闭Git Daemon
     """
-    try:
-        submission = Submission.query.get(submission_id)
-        if not submission:
-            print(f"Error: Submission {submission_id} not found")
-            return
-
-        # 获取所有提交ID
-        submission_ids = {
-            'basic': submission.basic_submission_id,
-            'book': submission.book_submission_id,
-            'book_second': submission.book_second_submission_id,
-            'icpc': submission.icpc_submission_id,
-            'minesweeper': submission.minesweeper_submission_id,
-            'python': submission.python_submission_id,
-            'ticket': submission.ticket_submission_id
-        }
-
-        # 筛选掉None值
-        submission_ids = {k: v for k,
-                          v in submission_ids.items() if v is not None}
-
-        if not submission_ids:
-            print("No submission IDs available to monitor")
-            return
-
-        max_checks = 720  # 最多检查720次，约1小时
-        check_interval = 5  # 每5秒检查一次
-        check_count = 0
-
-        while check_count < max_checks:
-            check_count += 1
-            all_finished_compiling = True
-
-            # 检查每个仓库的评测状态
-            for repo_name, oj_submission_id in submission_ids.items():
-                try:
-                    # 调用OJ API获取评测状态
-                    response = requests.get(
-                        f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/submission/{oj_submission_id}",
-                        headers={
-                            'accept': 'application/json',
-                            'Authorization': f'Bearer {OJ_TOKEN}'
-                        }
-                    )
-
-                    if response.status_code == 200:
-                        result = response.json()
-                        status = result.get('status', '')
-                        score = result.get('score')
-
-                        # 更新数据库中的状态和分数
-                        setattr(submission, f"{repo_name}_status", status)
-                        if score is not None:
-                            setattr(
-                                submission, f"{repo_name}_score", float(score))
-
-                            # 特殊处理book评分：如果两个book提交都有分数，取平均值
-                            if repo_name == 'book' or repo_name == 'book_second':
-                                if submission.book_score is not None and submission.book_second_score is not None:
-                                    # 将book的score设置为两次提交的平均值
-                                    avg_score = (
-                                        submission.book_score + submission.book_second_score) / 2
-                                    submission.book_score = avg_score
-
-                        # 检查是否需要继续监控 - 当状态是pending或compiling时继续监控
-                        if status.lower() in ['pending', 'compiling']:
-                            all_finished_compiling = False
-                    else:
-                        print(
-                            f"API request failed for {repo_name}: {response.status_code}")
-                        all_finished_compiling = False
-                except Exception as e:
-                    print(f"Error checking {repo_name} status: {e}")
-                    all_finished_compiling = False
-
-            # 更新数据库
-            submission.calculate_total_score()
-            db.session.commit()
-
-            # 如果所有仓库都不再处于pending或compiling状态，则停止监控并关闭Git Daemon
-            if all_finished_compiling:
-                print("All repositories finished compiling, closing Git Daemon")
-                break
-
-            # 等待下一次检查
-            time.sleep(check_interval)
-
-        # 关闭Git Daemon
-        if submission.git_daemon_pid:
-            try:
-                os.kill(submission.git_daemon_pid, 15)  # SIGTERM
-                submission.git_daemon_pid = None
-                submission.details += "\nGit Daemon 已关闭"
-                db.session.commit()
-                print("Git Daemon has been closed")
-
-                # 清理临时目录
-                if submission.git_repos_path and os.path.exists(submission.git_repos_path):
-                    shutil.rmtree(submission.git_repos_path)
-                    submission.details += "\n临时目录已清理"
-                    submission.git_repos_path = None
-                    db.session.commit()
-            except OSError as e:
-                submission.details += f"\n尝试关闭 Git Daemon 失败: {str(e)}"
-                db.session.commit()
-                print(f"Failed to close Git Daemon: {e}")
-    except Exception as e:
-        print(f"Error in check_submission_status: {e}")
+    # 创建应用上下文
+    with app.app_context():
         try:
             submission = Submission.query.get(submission_id)
-            if submission:
-                submission.details += f"\n监控评测状态出错: {str(e)}"
+            if not submission:
+                print(f"Error: Submission {submission_id} not found")
+                return
+
+            # 获取所有提交ID
+            submission_ids = {
+                'basic': submission.basic_submission_id,
+                'book': submission.book_submission_id,
+                'book_second': submission.book_second_submission_id,
+                'icpc': submission.icpc_submission_id,
+                'minesweeper': submission.minesweeper_submission_id,
+                'python': submission.python_submission_id,
+                'ticket': submission.ticket_submission_id
+            }
+
+            # 筛选掉None值
+            submission_ids = {k: v for k,
+                              v in submission_ids.items() if v is not None}
+
+            if not submission_ids:
+                print("No submission IDs available to monitor")
+                return
+
+            max_checks = 720  # 最多检查720次，约1小时
+            check_interval = 5  # 每5秒检查一次
+            check_count = 0
+
+            while check_count < max_checks:
+                check_count += 1
+                all_finished_compiling = True
+
+                # 检查每个仓库的评测状态
+                for repo_name, oj_submission_id in submission_ids.items():
+                    try:
+                        # 调用OJ API获取评测状态
+                        response = requests.get(
+                            f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/submission/{oj_submission_id}",
+                            headers={
+                                'accept': 'application/json',
+                                'Authorization': f'Bearer {OJ_TOKEN}'
+                            },
+                            timeout=30  # 添加超时设置
+                        )
+
+                        if response.status_code == 200:
+                            result = response.json()
+                            status = result.get('status', '')
+                            score = result.get('score')
+
+                            # 更新数据库中的状态和分数
+                            setattr(submission, f"{repo_name}_status", status)
+                            if score is not None:
+                                setattr(
+                                    submission, f"{repo_name}_score", float(score))
+
+                                # 特殊处理book评分：如果两个book提交都有分数，取平均值
+                                if repo_name == 'book' or repo_name == 'book_second':
+                                    if submission.book_score is not None and submission.book_second_score is not None:
+                                        # 将book的score设置为两次提交的平均值
+                                        avg_score = (
+                                            submission.book_score + submission.book_second_score) / 2
+                                        submission.book_score = avg_score
+
+                            # 检查是否需要继续监控 - 当状态是pending或compiling时继续监控
+                            if status.lower() in ['pending', 'compiling']:
+                                all_finished_compiling = False
+                        else:
+                            print(
+                                f"API request failed for {repo_name}: {response.status_code}")
+                            all_finished_compiling = False
+                    except requests.RequestException as e:
+                        print(f"Error checking {repo_name} status: {e}")
+                        all_finished_compiling = False
+                    except Exception as e:
+                        print(
+                            f"Unexpected error checking {repo_name} status: {e}")
+                        all_finished_compiling = False
+
+                # 更新数据库
+                submission.calculate_total_score()
                 db.session.commit()
-        except:
-            print(f"[严重错误] 无法更新数据库: {e}")
+
+                # 如果所有仓库都不再处于pending或compiling状态，则停止监控并关闭Git Daemon
+                if all_finished_compiling:
+                    print("All repositories finished compiling, closing Git Daemon")
+                    break
+
+                # 等待下一次检查
+                time.sleep(check_interval)
+
+            # 关闭Git Daemon
+            if submission.git_daemon_pid:
+                try:
+                    os.kill(submission.git_daemon_pid, 15)  # SIGTERM
+                    submission.git_daemon_pid = None
+                    submission.details += "\nGit Daemon 已关闭"
+                    db.session.commit()
+                    print("Git Daemon has been closed")
+
+                    # 清理临时目录
+                    if submission.git_repos_path and os.path.exists(submission.git_repos_path):
+                        shutil.rmtree(submission.git_repos_path)
+                        submission.details += "\n临时目录已清理"
+                        submission.git_repos_path = None
+                        db.session.commit()
+                except OSError as e:
+                    submission.details += f"\n尝试关闭 Git Daemon 失败: {str(e)}"
+                    db.session.commit()
+                    print(f"Failed to close Git Daemon: {e}")
+            else:
+                print("No Git Daemon PID recorded, cannot close daemon")
+        except Exception as e:
+            print(f"Error in check_submission_status: {e}")
+            try:
+                with app.app_context():  # 确保在发生异常时也在应用上下文中操作
+                    submission = Submission.query.get(submission_id)
+                    if submission:
+                        submission.details += f"\n监控评测状态出错: {str(e)}"
+                        db.session.commit()
+            except Exception as inner_e:
+                print(f"[严重错误] 无法更新数据库: {inner_e}")
 
 
 def update_submission_status(submission):
@@ -384,7 +396,8 @@ def update_submission_status(submission):
                 headers={
                     'accept': 'application/json',
                     'Authorization': f'Bearer {OJ_TOKEN}'
-                }
+                },
+                timeout=30  # 添加超时设置
             )
 
             if response.status_code == 200:
@@ -404,8 +417,10 @@ def update_submission_status(submission):
                             avg_score = (submission.book_score +
                                          submission.book_second_score) / 2
                             submission.book_score = avg_score
-        except Exception as e:
+        except requests.RequestException as e:
             print(f"Error checking {repo_name} status: {e}")
+        except Exception as e:
+            print(f"Unexpected error checking {repo_name} status: {e}")
 
     # 计算总分并更新数据库
     submission.calculate_total_score()
@@ -413,131 +428,113 @@ def update_submission_status(submission):
 
 
 def process_git_submission(submission_id, model_id, zip_path):
+    """处理Git提交，此函数在后台线程中执行"""
     temp_dir = None
-    try:
-        submission = Submission.query.get(submission_id)
-        model = Model.query.get(model_id)
+    # 创建应用上下文
+    with app.app_context():
+        try:
+            submission = Submission.query.get(submission_id)
+            model = Model.query.get(model_id)
 
-        if not submission or not model:
-            raise Exception("找不到提交记录或模型")
+            if not submission or not model:
+                raise Exception("找不到提交记录或模型")
 
-        # 创建临时目录并解压 zip 文件
-        temp_dir = tempfile.mkdtemp(
-            prefix=f"git_repos_{submission_id}_", dir="/tmp")
+            # 创建临时目录并解压 zip 文件
+            temp_dir = tempfile.mkdtemp(
+                prefix=f"git_repos_{submission_id}_", dir="/tmp")
 
-        extract_zip_flat(zip_path, temp_dir)
+            extract_zip_flat(zip_path, temp_dir)
 
-        # 假设 zip 中是多个子目录，每个对应一个 repo
-        repo_dirs = sorted(
-            [os.path.join(temp_dir, d) for d in os.listdir(temp_dir)
-             if os.path.isdir(os.path.join(temp_dir, d))]
-        )
-        repo_names = [os.path.basename(repo_dir) for repo_dir in repo_dirs]
-        print(f"Repo Names: {repo_names}")
+            # 处理完毕后删除上传的zip文件
+            if os.path.exists(zip_path):
+                try:
+                    os.remove(zip_path)
+                except OSError as e:
+                    print(f"警告：无法删除上传的zip文件 {zip_path}: {e}")
 
-        # 映射仓库名到仓库类型
-        repo_type_mapping = {}
-        for repo_dir in repo_dirs:
-            repo_name = os.path.basename(repo_dir)
-            repo_type = match_repository_type(repo_name)
+            # 假设 zip 中是多个子目录，每个对应一个 repo
+            repo_dirs = sorted(
+                [os.path.join(temp_dir, d) for d in os.listdir(temp_dir)
+                 if os.path.isdir(os.path.join(temp_dir, d))]
+            )
+            repo_names = [os.path.basename(repo_dir) for repo_dir in repo_dirs]
+            print(f"Repo Names: {repo_names}")
 
-            if repo_type:
-                if repo_type in repo_type_mapping:
-                    # 多个文件夹匹配到同一个仓库类型
-                    submission.details = f"错误: 多个文件夹匹配到同一个仓库类型 '{repo_type}'。文件夹: {repo_type_mapping[repo_type]}, {repo_name}"
-                    db.session.commit()
-                    return
-                repo_type_mapping[repo_type] = repo_dir
+            # 映射仓库名到仓库类型
+            repo_type_mapping = {}
+            for repo_dir in repo_dirs:
+                repo_name = os.path.basename(repo_dir)
+                repo_type = match_repository_type(repo_name)
 
-        # 检查是否所有仓库类型都匹配到了
-        missing_types = set(REPOSITORY_PROBLEM_MAPPING.keys()
-                            ) - set(repo_type_mapping.keys())
-        if missing_types:
-            submission.details = f"错误: 以下仓库类型未找到匹配的文件夹: {', '.join(missing_types)}"
-            db.session.commit()
-            return
+                if repo_type:
+                    if repo_type in repo_type_mapping:
+                        # 多个文件夹匹配到同一个仓库类型
+                        submission.details = f"错误: 多个文件夹匹配到同一个仓库类型 '{repo_type}'。文件夹: {repo_type_mapping[repo_type]}, {repo_name}"
+                        db.session.commit()
+                        return
+                    repo_type_mapping[repo_type] = repo_dir
 
-        # 特殊检查Minesweeper的server.h文件
-        if 'minesweeper' in repo_type_mapping:
-            minesweeper_dir = repo_type_mapping['minesweeper']
-            server_h_path = os.path.join(minesweeper_dir, 'server.h')
-            if not os.path.exists(server_h_path):
-                submission.details = f"错误: Minesweeper仓库中找不到server.h文件"
+            # 检查是否所有仓库类型都匹配到了
+            missing_types = set(REPOSITORY_PROBLEM_MAPPING.keys()
+                                ) - set(repo_type_mapping.keys())
+            if missing_types:
+                submission.details = f"错误: 以下仓库类型未找到匹配的文件夹: {', '.join(missing_types)}"
                 db.session.commit()
                 return
 
-        # 初始化并提交 Git 仓库 (除了Minesweeper)
-        for repo_type, repo_dir in repo_type_mapping.items():
-            if repo_type != 'minesweeper':  # 跳过Minesweeper，它将使用不同的提交方法
-                subprocess.run(['git', 'init'], cwd=repo_dir, check=True)
-                subprocess.run(['git', 'add', '.'], cwd=repo_dir, check=True)
-                subprocess.run(
-                    ['git', 'config', 'user.email', 'you@example.com'], cwd=repo_dir, check=True)
-                subprocess.run(
-                    ['git', 'config', 'user.name', 'Your Name'], cwd=repo_dir, check=True)
-                subprocess.run(
-                    ['git', 'commit', '-m', 'Initial commit'], cwd=repo_dir, check=True)
-                export_ok_path = os.path.join(
-                    repo_dir, '.git', 'git-daemon-export-ok')
-                open(export_ok_path, 'w').close()
+            # 特殊检查Minesweeper的server.h文件
+            if 'minesweeper' in repo_type_mapping:
+                minesweeper_dir = repo_type_mapping['minesweeper']
+                server_h_path = os.path.join(minesweeper_dir, 'server.h')
+                if not os.path.exists(server_h_path):
+                    submission.details = f"错误: Minesweeper仓库中找不到server.h文件"
+                    db.session.commit()
+                    return
 
-        # 启动 Git Daemon 服务
-        git_manager = GitDaemonManager(temp_dir)
-        daemon_pid = git_manager.start_daemon()
+            # 初始化并提交 Git 仓库 (除了Minesweeper)
+            for repo_type, repo_dir in repo_type_mapping.items():
+                if repo_type != 'minesweeper':  # 跳过Minesweeper，它将使用不同的提交方法
+                    try:
+                        subprocess.run(['git', 'init'],
+                                       cwd=repo_dir, check=True)
+                        subprocess.run(['git', 'add', '.'],
+                                       cwd=repo_dir, check=True)
+                        subprocess.run(
+                            ['git', 'config', 'user.email', 'you@example.com'], cwd=repo_dir, check=True)
+                        subprocess.run(
+                            ['git', 'config', 'user.name', 'Your Name'], cwd=repo_dir, check=True)
+                        subprocess.run(
+                            ['git', 'commit', '-m', 'Initial commit'], cwd=repo_dir, check=True)
+                        export_ok_path = os.path.join(
+                            repo_dir, '.git', 'git-daemon-export-ok')
+                        open(export_ok_path, 'w').close()
+                    except subprocess.SubprocessError as e:
+                        submission.details = f"错误: 初始化Git仓库 {repo_type} 失败: {str(e)}"
+                        db.session.commit()
+                        return
 
-        # 更新提交记录
-        submission.git_repos_path = temp_dir
-        submission.git_daemon_pid = daemon_pid
-        db.session.commit()
+            # 启动 Git Daemon 服务
+            git_manager = GitDaemonManager(temp_dir)
+            daemon_pid = git_manager.start_daemon()
 
-        time.sleep(2)  # 等待 Git Daemon 完全启动
+            # 更新提交记录
+            submission.git_repos_path = temp_dir
+            submission.git_daemon_pid = daemon_pid
+            db.session.commit()
 
-        # 处理Minesweeper特殊提交
-        if 'minesweeper' in repo_type_mapping:
-            minesweeper_dir = repo_type_mapping['minesweeper']
-            server_h_path = os.path.join(minesweeper_dir, 'server.h')
-            with open(server_h_path, 'r') as f:
-                server_h_code = f.read()
+            time.sleep(2)  # 等待 Git Daemon 完全启动
 
-            # 提交Minesweeper的server.h作为CPP代码
-            problem_id = REPOSITORY_PROBLEM_MAPPING['minesweeper'][0]  # 2395
-            response = requests.post(
-                f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/problem/{problem_id}/submit",
-                headers={
-                    'accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': f'Bearer {OJ_TOKEN}'
-                },
-                data={
-                    'public': 'false',
-                    'language': 'cpp',
-                    'code': server_h_code
-                }
-            )
+            # 处理Minesweeper特殊提交
+            if 'minesweeper' in repo_type_mapping:
+                minesweeper_dir = repo_type_mapping['minesweeper']
+                server_h_path = os.path.join(minesweeper_dir, 'server.h')
+                try:
+                    with open(server_h_path, 'r') as f:
+                        server_h_code = f.read()
 
-            if response.status_code == 201:
-                result = response.json()
-                oj_submission_id = result.get('id')
-                submission.minesweeper_submission_id = oj_submission_id
-                submission.details += f"\nMinesweeper仓库的server.h文件以CPP语言提交到题目{problem_id}，OJ提交ID: {oj_submission_id}"
-                db.session.commit()
-            else:
-                submission.details += f"\nMinesweeper仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}"
-                db.session.commit()
-
-            time.sleep(2)  # 避免API请求过快
-
-        # 提交其他仓库到对应题目
-        for repo_type, repo_dir in repo_type_mapping.items():
-            if repo_type != 'minesweeper':  # 跳过Minesweeper，它已经单独处理
-                repo_name = os.path.basename(repo_dir)
-                problem_ids = REPOSITORY_PROBLEM_MAPPING[repo_type]
-
-                for i, problem_id in enumerate(problem_ids):
-                    # 构建git协议URL
-                    git_url = f"git://{SERVER_IP}/{repo_name}"
-
-                    # API调用
+                    # 提交Minesweeper的server.h作为CPP代码
+                    # 2395
+                    problem_id = REPOSITORY_PROBLEM_MAPPING['minesweeper'][0]
                     response = requests.post(
                         f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/problem/{problem_id}/submit",
                         headers={
@@ -547,54 +544,109 @@ def process_git_submission(submission_id, model_id, zip_path):
                         },
                         data={
                             'public': 'false',
-                            'language': 'git',
-                            'code': git_url
-                        }
+                            'language': 'cpp',
+                            'code': server_h_code
+                        },
+                        timeout=30  # 添加超时设置
                     )
 
                     if response.status_code == 201:
                         result = response.json()
                         oj_submission_id = result.get('id')
-
-                        # 设置对应字段
-                        if repo_type == 'basic':
-                            submission.basic_submission_id = oj_submission_id
-                        elif repo_type == 'book':
-                            if i == 0:
-                                submission.book_submission_id = oj_submission_id
-                            else:
-                                submission.book_second_submission_id = oj_submission_id
-                        elif repo_type == 'icpc':
-                            submission.icpc_submission_id = oj_submission_id
-                        elif repo_type == 'python':
-                            submission.python_submission_id = oj_submission_id
-                        elif repo_type == 'ticket':
-                            submission.ticket_submission_id = oj_submission_id
-
-                        submission.details += f"\n{repo_type.capitalize()}仓库提交到题目{problem_id}，OJ提交ID: {oj_submission_id}"
+                        submission.minesweeper_submission_id = oj_submission_id
+                        submission.details += f"\nMinesweeper仓库的server.h文件以CPP语言提交到题目{problem_id}，OJ提交ID: {oj_submission_id}"
                         db.session.commit()
                     else:
-                        submission.details += f"\n{repo_type.capitalize()}仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}"
+                        submission.details += f"\nMinesweeper仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}"
                         db.session.commit()
+                except (IOError, requests.RequestException) as e:
+                    submission.details += f"\nMinesweeper提交出错: {str(e)}"
+                    db.session.commit()
 
-                    # 避免API请求过快
-                    time.sleep(2)
+                time.sleep(2)  # 避免API请求过快
 
-        # 启动监控线程，监控评测状态
-        threading.Thread(
-            target=check_submission_status,
-            args=(submission.id,),
-            daemon=True
-        ).start()
+            # 提交其他仓库到对应题目
+            for repo_type, repo_dir in repo_type_mapping.items():
+                if repo_type != 'minesweeper':  # 跳过Minesweeper，它已经单独处理
+                    repo_name = os.path.basename(repo_dir)
+                    problem_ids = REPOSITORY_PROBLEM_MAPPING[repo_type]
 
-    except Exception as e:
-        try:
-            submission = Submission.query.get(submission_id)
-            if submission:
-                submission.details = f"提交过程中出错: {str(e)}"
-                db.session.commit()
-        except:
-            print(f"[严重错误] 无法更新数据库: {e}")
+                    for i, problem_id in enumerate(problem_ids):
+                        try:
+                            # 构建git协议URL
+                            git_url = f"git://{SERVER_IP}/{repo_name}"
+
+                            # API调用
+                            response = requests.post(
+                                f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/problem/{problem_id}/submit",
+                                headers={
+                                    'accept': 'application/json',
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    'Authorization': f'Bearer {OJ_TOKEN}'
+                                },
+                                data={
+                                    'public': 'false',
+                                    'language': 'git',
+                                    'code': git_url
+                                },
+                                timeout=30  # 添加超时设置
+                            )
+
+                            if response.status_code == 201:
+                                result = response.json()
+                                oj_submission_id = result.get('id')
+
+                                # 设置对应字段
+                                if repo_type == 'basic':
+                                    submission.basic_submission_id = oj_submission_id
+                                elif repo_type == 'book':
+                                    if i == 0:
+                                        submission.book_submission_id = oj_submission_id
+                                    else:
+                                        submission.book_second_submission_id = oj_submission_id
+                                elif repo_type == 'icpc':
+                                    submission.icpc_submission_id = oj_submission_id
+                                elif repo_type == 'python':
+                                    submission.python_submission_id = oj_submission_id
+                                elif repo_type == 'ticket':
+                                    submission.ticket_submission_id = oj_submission_id
+
+                                submission.details += f"\n{repo_type.capitalize()}仓库提交到题目{problem_id}，OJ提交ID: {oj_submission_id}"
+                                db.session.commit()
+                            else:
+                                submission.details += f"\n{repo_type.capitalize()}仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}"
+                                db.session.commit()
+                        except requests.RequestException as e:
+                            submission.details += f"\n{repo_type.capitalize()}提交到题目{problem_id}时出错: {str(e)}"
+                            db.session.commit()
+
+                        # 避免API请求过快
+                        time.sleep(2)
+
+            # 启动监控线程，监控评测状态
+            threading.Thread(
+                target=check_submission_status,
+                args=(submission.id,),
+                daemon=True
+            ).start()
+
+        except Exception as e:
+            print(f"Process git submission error: {e}")
+            try:
+                with app.app_context():  # 确保在发生异常时也在应用上下文中操作
+                    submission = Submission.query.get(submission_id)
+                    if submission:
+                        submission.details = f"提交过程中出错: {str(e)}"
+                        db.session.commit()
+            except Exception as inner_e:
+                print(f"[严重错误] 无法更新数据库: {inner_e}")
+
+            # 清理临时目录（如果存在）
+            if temp_dir and os.path.exists(temp_dir):
+                try:
+                    shutil.rmtree(temp_dir)
+                except OSError as e:
+                    print(f"无法清理临时目录 {temp_dir}: {e}")
 # routes
 
 
@@ -874,7 +926,8 @@ def task_detail(task_type, oj_submission_id):
             headers={
                 'accept': 'application/json',
                 'Authorization': f'Bearer {OJ_TOKEN}'
-            }
+            },
+            timeout=30  # 添加超时设置
         )
 
         if response.status_code != 200:
@@ -929,6 +982,11 @@ def task_detail(task_type, oj_submission_id):
             submission=submission,
             oj_submission_id=oj_submission_id
         )
+    except requests.RequestException as e:
+        flash(f"请求任务详情时出错: {str(e)}", "error")
+        if submission_id:
+            return redirect(url_for('submission_detail', submission_id=submission_id))
+        return redirect(url_for('index'))
     except Exception as e:
         flash(f"获取任务详情时出错: {str(e)}", "error")
         if submission_id:
@@ -949,7 +1007,8 @@ def api_task_detail(task_id):
             headers={
                 'accept': 'application/json',
                 'Authorization': f'Bearer {OJ_TOKEN}'
-            }
+            },
+            timeout=30  # 添加超时设置
         )
 
         # 获取原始响应数据
@@ -961,9 +1020,15 @@ def api_task_detail(task_id):
         # 直接返回从评测网站获取的JSON数据
         return jsonify(data), status_code
 
-    except Exception as e:
+    except requests.RequestException as e:
         error_response = {
             'error': 'Failed to fetch data from evaluation site',
+            'message': str(e)
+        }
+        return jsonify(error_response), 500
+    except Exception as e:
+        error_response = {
+            'error': 'Unexpected error occurred',
             'message': str(e)
         }
         return jsonify(error_response), 500
