@@ -45,7 +45,11 @@
         </div>
         <div class="stat-card">
             <div class="stat-value">{{ top_score|default('0') }}%</div>
-            <div class="stat-label">Top Score</div>
+            <div class="stat-label">Top Single Score</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ top_total_best_score|default('0') }}%</div>
+            <div class="stat-label">Top Total Score</div>
         </div>
     </div>
 
@@ -85,9 +89,7 @@
                         {{ "%.2f"|format(avg_score or 0) }}
                     </td>
                     <td class="best-score">
-                        {% set best_score = model.submission.filter(Submission.score !=
-                        None).with_entities(db.func.max(Submission.score)).scalar() %}
-                        {{ "%.2f"|format(best_score or 0) }}
+                        {{ "%.2f"|format(model.calculate_total_best_score()) }}
                     </td>
                     <td class="last-submit">
                         {% if model.submission.first() %}
@@ -201,24 +203,25 @@
                             data.models.forEach((model, index) => {
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
-                                <td class="rank">${currentRowCount + index + 1}</td>
-                                <td class="model-name">
-                                    <a href="model/${model.id}" class="model-link">${model.name}</a>
-                                    ${model.description ? `<span class="model-desc-tooltip">${model.description}</span>` : ''}
-                                </td>
-                                <td class="submissions-count">${model.submissions_count}</td>
-                                <td class="avg-score">${model.avg_score.toFixed(2)}</td>
-                                <td class="best-score">${model.best_score.toFixed(2)}</td>
-                                <td class="last-submit">${model.last_submit || 'No submit'}</td>
-                                <td class="actions">
-                                    <a href="/detail/${model.id}" class="btn-view" title="Model Details">
-                                        <span class="icon">👁️</span>
-                                    </a>
-                                    <a href="/submit?model_id=${model.id}" class="btn-submit" title="Submit">
-                                        <span class="icon">📤</span>
-                                    </a>
-                                </td>
-                            `;
+                                    <td class="rank">${currentRowCount + index + 1}</td>
+                                    <td class="model-name">
+                                        <a href="model/${model.id}" class="model-link">${model.name}</a>
+                                        ${model.organization ? `<span class="model-org-badge">${model.organization}</span>` : ''}
+                                        ${model.description ? `<span class="model-desc-tooltip">${model.description}</span>` : ''}
+                                    </td>
+                                    <td class="submissions-count">${model.submissions_count}</td>
+                                    <td class="avg-score">${model.avg_score.toFixed(2)}</td>
+                                    <td class="best-score">${model.total_best_score.toFixed(2)}</td>
+                                    <td class="last-submit">${model.last_submit || 'No submit'}</td>
+                                    <td class="actions">
+                                        <a href="/model/${model.id}" class="btn-view" title="Model Details">
+                                            <span class="icon">👁️</span>
+                                        </a>
+                                        <a href="/submit?model_id=${model.id}" class="btn-submit" title="Submit">
+                                            <span class="icon">📤</span>
+                                        </a>
+                                    </td>
+                                `;
                                 tbody.appendChild(row);
                             });
 

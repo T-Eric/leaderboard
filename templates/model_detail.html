@@ -20,6 +20,49 @@
         <p><strong>Number of Submissions:</strong> {{ model.submission.count() }}</p>
     </div>
 
+    <div class="best-scores">
+        <h2>Best Scores Across All Submissions</h2>
+        <table class="repo-scores-table">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Best Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Basic</td>
+                    <td>{{ "%.2f"|format(model.best_basic_score) if model.best_basic_score else 'Not scored' }}</td>
+                </tr>
+                <tr>
+                    <td>Book</td>
+                    <td>{{ "%.2f"|format(model.best_book_score) if model.best_book_score else 'Not scored' }}</td>
+                </tr>
+                <tr>
+                    <td>ICPC</td>
+                    <td>{{ "%.2f"|format(model.best_icpc_score) if model.best_icpc_score else 'Not scored' }}</td>
+                </tr>
+                <tr>
+                    <td>Minesweeper</td>
+                    <td>{{ "%.2f"|format(model.best_minesweeper_score) if model.best_minesweeper_score else 'Not scored'
+                        }}</td>
+                </tr>
+                <tr>
+                    <td>Python</td>
+                    <td>{{ "%.2f"|format(model.best_python_score) if model.best_python_score else 'Not scored' }}</td>
+                </tr>
+                <tr>
+                    <td>Ticket</td>
+                    <td>{{ "%.2f"|format(model.best_ticket_score) if model.best_ticket_score else 'Not scored' }}</td>
+                </tr>
+                <tr class="table-success">
+                    <td><strong>Total Best Score</strong></td>
+                    <td><strong>{{ "%.2f"|format(model.calculate_total_best_score()) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     {% if best_submission %}
     <div class="best-submission">
         <h2>Best shot</h2>
@@ -29,8 +72,7 @@
                     best_submission.id }}</a></p>
             <p><strong>Submission Time:</strong> {{ best_submission.submission_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
             <p><strong>Total Score:</strong> {% if best_submission.score %}{{ "%.2f"|format(best_submission.score) }}{%
-                else
-                %}Evaluating...{% endif %}</p>
+                else %}Evaluating...{% endif %}</p>
         </div>
 
         <table class="repo-scores-table">
@@ -82,8 +124,7 @@
                         {{ best_submission.python_status or 'Not evaluated' }}
                     </td>
                     <td>{{ "%.2f"|format(best_submission.python_score) if best_submission.python_score else 'Not scored'
-                        }}
-                    </td>
+                        }}</td>
                 </tr>
                 <tr>
                     <td>Ticket</td>
@@ -92,8 +133,7 @@
                         {{ best_submission.ticket_status or 'Not evaluated' }}
                     </td>
                     <td>{{ "%.2f"|format(best_submission.ticket_score) if best_submission.ticket_score else 'Not scored'
-                        }}
-                    </td>
+                        }}</td>
                 </tr>
             </tbody>
         </table>

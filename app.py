@@ -55,11 +55,38 @@ class Model(db.Model):
     description = db.Column(db.String(128))
     organization = db.Column(db.String(64), nullable=True)
 
+    # 添加各任务的最高分属性
+    best_basic_score = db.Column(db.Float, nullable=True)
+    # book任务的最高分(已合并两个book提交的平均值)
+    best_book_score = db.Column(db.Float, nullable=True)
+    best_icpc_score = db.Column(db.Float, nullable=True)
+    best_minesweeper_score = db.Column(db.Float, nullable=True)
+    best_python_score = db.Column(db.Float, nullable=True)
+    best_ticket_score = db.Column(db.Float, nullable=True)
+
     submission = db.relationship(
         'Submission', backref='model', lazy='dynamic', order_by="desc(Submission.submission_time)")
 
     def __repr__(self):
         return f"<Model {self.id}: {self.name}>"
+
+    def calculate_total_best_score(self):
+        """计算所有任务最高分的总和"""
+        scores = []
+        if self.best_basic_score is not None:
+            scores.append(self.best_basic_score)
+        if self.best_book_score is not None:
+            scores.append(self.best_book_score)
+        if self.best_icpc_score is not None:
+            scores.append(self.best_icpc_score)
+        if self.best_minesweeper_score is not None:
+            scores.append(self.best_minesweeper_score)
+        if self.best_python_score is not None:
+            scores.append(self.best_python_score)
+        if self.best_ticket_score is not None:
+            scores.append(self.best_ticket_score)
+
+        return sum(scores) if scores else 0
 
 
 class Submission(db.Model):
@@ -140,16 +167,30 @@ class Submission(db.Model):
         return True
 
     def calculate_total_score(self):
-        """计算总分"""
-        scores = [
-            self.basic_score, self.book_score, self.icpc_score,
-            self.minesweeper_score, self.python_score, self.ticket_score
-        ]
+        """计算总分，只考虑实际提交的仓库的分数"""
+        # 获取所有实际提交的仓库的分数
+        submitted_scores = []
 
-        # 过滤掉None值
-        valid_scores = [s for s in scores if s is not None]
-        if valid_scores:
-            self.score = sum(valid_scores) / len(valid_scores)
+        # 检查每个仓库是否有提交
+        if self.basic_submission_id is not None and self.basic_score is not None:
+            submitted_scores.append(self.basic_score)
+        if self.book_submission_id is not None and self.book_score is not None:
+            submitted_scores.append(self.book_score)
+        if self.icpc_submission_id is not None and self.icpc_score is not None:
+            submitted_scores.append(self.icpc_score)
+        if self.minesweeper_submission_id is not None and self.minesweeper_score is not None:
+            submitted_scores.append(self.minesweeper_score)
+        if self.python_submission_id is not None and self.python_score is not None:
+            submitted_scores.append(self.python_score)
+        if self.ticket_submission_id is not None and self.ticket_score is not None:
+            submitted_scores.append(self.ticket_score)
+
+        # 计算平均分
+        if submitted_scores:
+            self.score = sum(submitted_scores) / len(submitted_scores)
+        else:
+            self.score = None
+
         return self.score
 
 
@@ -179,6 +220,63 @@ def match_repository_type(repo_name):
         if repo_type.lower() in repo_name_lower:
             return repo_type
     return None
+
+
+def update_model_best_scores(model_id):
+    """更新模型在各任务中的最高分"""
+    model = Model.query.get(model_id)
+    if not model:
+        return False
+
+    # 获取该模型的所有提交
+    submissions = model.submission.all()
+
+    # 初始化最高分
+    best_scores = {
+        'basic': None,
+        'book': None,
+        'icpc': None,
+        'minesweeper': None,
+        'python': None,
+        'ticket': None
+    }
+
+    # 遍历所有提交，找出每个任务的最高分
+    for submission in submissions:
+        if submission.basic_score is not None:
+            if best_scores['basic'] is None or submission.basic_score > best_scores['basic']:
+                best_scores['basic'] = submission.basic_score
+
+        if submission.book_score is not None:
+            if best_scores['book'] is None or submission.book_score > best_scores['book']:
+                best_scores['book'] = submission.book_score
+
+        if submission.icpc_score is not None:
+            if best_scores['icpc'] is None or submission.icpc_score > best_scores['icpc']:
+                best_scores['icpc'] = submission.icpc_score
+
+        if submission.minesweeper_score is not None:
+            if best_scores['minesweeper'] is None or submission.minesweeper_score > best_scores['minesweeper']:
+                best_scores['minesweeper'] = submission.minesweeper_score
+
+        if submission.python_score is not None:
+            if best_scores['python'] is None or submission.python_score > best_scores['python']:
+                best_scores['python'] = submission.python_score
+
+        if submission.ticket_score is not None:
+            if best_scores['ticket'] is None or submission.ticket_score > best_scores['ticket']:
+                best_scores['ticket'] = submission.ticket_score
+
+    # 更新模型的最高分属性
+    model.best_basic_score = best_scores['basic']
+    model.best_book_score = best_scores['book']
+    model.best_icpc_score = best_scores['icpc']
+    model.best_minesweeper_score = best_scores['minesweeper']
+    model.best_python_score = best_scores['python']
+    model.best_ticket_score = best_scores['ticket']
+
+    db.session.commit()
+    return True
 
 
 # daemon handler
@@ -289,7 +387,7 @@ def check_submission_status(submission_id):
                                 'accept': 'application/json',
                                 'Authorization': f'Bearer {OJ_TOKEN}'
                             },
-                            timeout=30  # 添加超时设置
+                            timeout=30
                         )
 
                         if response.status_code == 200:
@@ -333,6 +431,7 @@ def check_submission_status(submission_id):
                 # 如果所有仓库都不再处于pending或compiling状态，则停止监控并关闭Git Daemon
                 if all_finished_compiling:
                     print("All repositories finished compiling, closing Git Daemon")
+                    update_model_best_scores(submission.model_id)
                     break
 
                 # 等待下一次检查
@@ -362,7 +461,7 @@ def check_submission_status(submission_id):
         except Exception as e:
             print(f"Error in check_submission_status: {e}")
             try:
-                with app.app_context():  # 确保在发生异常时也在应用上下文中操作
+                with app.app_context():
                     submission = Submission.query.get(submission_id)
                     if submission:
                         submission.details += f"\n监控评测状态出错: {str(e)}"
@@ -425,6 +524,7 @@ def update_submission_status(submission):
     # 计算总分并更新数据库
     submission.calculate_total_score()
     db.session.commit()
+    update_model_best_scores(submission.model_id)
 
 
 def process_git_submission(submission_id, model_id, zip_path):
@@ -474,20 +574,23 @@ def process_git_submission(submission_id, model_id, zip_path):
                         return
                     repo_type_mapping[repo_type] = repo_dir
 
-            # 检查是否所有仓库类型都匹配到了
-            missing_types = set(REPOSITORY_PROBLEM_MAPPING.keys()
-                                ) - set(repo_type_mapping.keys())
-            if missing_types:
-                submission.details = f"错误: 以下仓库类型未找到匹配的文件夹: {', '.join(missing_types)}"
+            # 移除强制检查所有仓库类型的限制，只要有至少一个有效仓库即可
+            if not repo_type_mapping:
+                submission.details = "错误: 未找到任何有效的仓库。请确保文件夹名称包含以下关键字之一: " + \
+                    ", ".join(REPOSITORY_PROBLEM_MAPPING.keys())
                 db.session.commit()
                 return
+
+            # 更新提交记录，记录本次提交包含哪些仓库
+            submission.details = f"提交包含以下仓库: {', '.join(repo_type_mapping.keys())}\n"
+            db.session.commit()
 
             # 特殊检查Minesweeper的server.h文件
             if 'minesweeper' in repo_type_mapping:
                 minesweeper_dir = repo_type_mapping['minesweeper']
                 server_h_path = os.path.join(minesweeper_dir, 'server.h')
                 if not os.path.exists(server_h_path):
-                    submission.details = f"错误: Minesweeper仓库中找不到server.h文件"
+                    submission.details += f"错误: Minesweeper仓库中找不到server.h文件"
                     db.session.commit()
                     return
 
@@ -509,7 +612,7 @@ def process_git_submission(submission_id, model_id, zip_path):
                             repo_dir, '.git', 'git-daemon-export-ok')
                         open(export_ok_path, 'w').close()
                     except subprocess.SubprocessError as e:
-                        submission.details = f"错误: 初始化Git仓库 {repo_type} 失败: {str(e)}"
+                        submission.details += f"错误: 初始化Git仓库 {repo_type} 失败: {str(e)}"
                         db.session.commit()
                         return
 
@@ -554,13 +657,13 @@ def process_git_submission(submission_id, model_id, zip_path):
                         result = response.json()
                         oj_submission_id = result.get('id')
                         submission.minesweeper_submission_id = oj_submission_id
-                        submission.details += f"\nMinesweeper仓库的server.h文件以CPP语言提交到题目{problem_id}，OJ提交ID: {oj_submission_id}"
+                        submission.details += f"Minesweeper仓库的server.h文件以CPP语言提交到题目{problem_id}，OJ提交ID: {oj_submission_id}\n"
                         db.session.commit()
                     else:
-                        submission.details += f"\nMinesweeper仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}"
+                        submission.details += f"Minesweeper仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}\n"
                         db.session.commit()
                 except (IOError, requests.RequestException) as e:
-                    submission.details += f"\nMinesweeper提交出错: {str(e)}"
+                    submission.details += f"Minesweeper提交出错: {str(e)}\n"
                     db.session.commit()
 
                 time.sleep(2)  # 避免API请求过快
@@ -611,13 +714,13 @@ def process_git_submission(submission_id, model_id, zip_path):
                                 elif repo_type == 'ticket':
                                     submission.ticket_submission_id = oj_submission_id
 
-                                submission.details += f"\n{repo_type.capitalize()}仓库提交到题目{problem_id}，OJ提交ID: {oj_submission_id}"
+                                submission.details += f"{repo_type.capitalize()}仓库提交到题目{problem_id}，OJ提交ID: {oj_submission_id}\n"
                                 db.session.commit()
                             else:
-                                submission.details += f"\n{repo_type.capitalize()}仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}"
+                                submission.details += f"{repo_type.capitalize()}仓库提交到题目{problem_id}失败: {response.status_code} - {response.text}\n"
                                 db.session.commit()
                         except requests.RequestException as e:
-                            submission.details += f"\n{repo_type.capitalize()}提交到题目{problem_id}时出错: {str(e)}"
+                            submission.details += f"{repo_type.capitalize()}提交到题目{problem_id}时出错: {str(e)}\n"
                             db.session.commit()
 
                         # 避免API请求过快
@@ -647,7 +750,6 @@ def process_git_submission(submission_id, model_id, zip_path):
                     shutil.rmtree(temp_dir)
                 except OSError as e:
                     print(f"无法清理临时目录 {temp_dir}: {e}")
-# routes
 
 
 @app.route('/')
@@ -673,7 +775,21 @@ def index():
     # 获取统计信息
     models_count = Model.query.count()
     submissions_count = Submission.query.count()
+
+    # 单次提交最高分
     top_score = db.session.query(db.func.max(Submission.score)).scalar() or 0
+
+    # 计算所有模型中的最高总分
+    top_total_best_score = db.session.query(
+        db.func.max(
+            db.func.coalesce(Model.best_basic_score, 0) +
+            db.func.coalesce(Model.best_book_score, 0) +
+            db.func.coalesce(Model.best_icpc_score, 0) +
+            db.func.coalesce(Model.best_minesweeper_score, 0) +
+            db.func.coalesce(Model.best_python_score, 0) +
+            db.func.coalesce(Model.best_ticket_score, 0)
+        )
+    ).scalar() or 0
 
     return render_template(
         'index.html',
@@ -682,8 +798,9 @@ def index():
         models_count=models_count,
         submissions_count=submissions_count,
         top_score=top_score,
-        Submission=Submission,  # 传递模型类给模板
-        db=db  # 传递db对象给模板以便使用func等功能
+        top_total_best_score=top_total_best_score,
+        Submission=Submission,
+        db=db
     )
 
 
@@ -714,14 +831,18 @@ def api_models():
         submissions = model.submission.all()
         scores = [s.score for s in submissions if s.score is not None]
 
+        # 计算总最佳分数
+        total_best_score = model.calculate_total_best_score()
+
         models_data.append({
             'id': model.id,
             'name': model.name,
-            'organization': model.organization,  # 添加组织信息
+            'organization': model.organization,
             'description': model.description,
             'submissions_count': len(submissions),
             'avg_score': sum(scores) / len(scores) if scores else 0,
             'best_score': max(scores) if scores else 0,
+            'total_best_score': total_best_score,  # 添加总最佳分数
             'last_submit': submissions[0].submission_time.strftime('%Y-%m-%d %H:%M') if submissions else None
         })
 
@@ -792,6 +913,279 @@ def submit():
         Submission.submission_time.desc()).limit(10).all()
     return render_template('submit.html', submissions=recent_submissions, models=models, selected_model_id=selected_model_id)
 
+
+@app.route('/api/submit', methods=['POST'])
+def api_submit():
+    """
+    API 端点，允许通过 curl 等命令行工具提交 ZIP 文件进行测评
+    返回所有任务的提交 ID（未提交的任务 ID 为 -1）
+    """
+    try:
+        # 获取模型ID
+        model_id = request.form.get('model_id', type=int)
+        if not model_id:
+            return jsonify({'error': 'Model ID is required'}), 400
+
+        # 检查模型是否存在
+        model = Model.query.get(model_id)
+        if not model:
+            return jsonify({'error': f'Model with ID {model_id} not found'}), 404
+
+        # 检查是否有文件上传
+        if 'zip_file' not in request.files:
+            return jsonify({'error': 'No zip file provided'}), 400
+
+        zip_file = request.files['zip_file']
+        if zip_file.filename == '':
+            return jsonify({'error': 'Empty filename'}), 400
+
+        # 检查文件类型
+        if not zip_file.filename.endswith('.zip'):
+            return jsonify({'error': 'File must be a ZIP archive'}), 400
+
+        # 保存ZIP文件
+        filename = secure_filename(zip_file.filename)
+        saved_path = os.path.join(UPLOAD_FOLDER, filename)
+        zip_file.save(saved_path)
+
+        # 创建提交记录
+        submission = Submission(
+            model_id=model_id,
+            problem_id=0,
+            details=f"API submission for model {model.name}, file {filename} processing..."
+        )
+        db.session.add(submission)
+        db.session.commit()
+
+        # 初始化提交ID字典，所有任务的默认ID为-1
+        submission_ids = {
+            'basic': -1,
+            'book': -1,
+            'book_second': -1,
+            'icpc': -1,
+            'minesweeper': -1,
+            'python': -1,
+            'ticket': -1
+        }
+
+        # 处理ZIP文件，提取和提交仓库
+        temp_dir = tempfile.mkdtemp(
+            prefix=f"git_repos_{submission.id}_", dir="/tmp")
+
+        try:
+            # 提取ZIP文件
+            extract_zip_flat(saved_path, temp_dir)
+
+            # 删除上传的ZIP文件
+            if os.path.exists(saved_path):
+                try:
+                    os.remove(saved_path)
+                except OSError:
+                    pass
+
+            # 获取仓库目录
+            repo_dirs = sorted(
+                [os.path.join(temp_dir, d) for d in os.listdir(temp_dir)
+                 if os.path.isdir(os.path.join(temp_dir, d))]
+            )
+
+            # 映射仓库名到仓库类型
+            repo_type_mapping = {}
+            for repo_dir in repo_dirs:
+                repo_name = os.path.basename(repo_dir)
+                repo_type = match_repository_type(repo_name)
+                if repo_type:
+                    repo_type_mapping[repo_type] = repo_dir
+
+            if not repo_type_mapping:
+                # 清理临时目录
+                shutil.rmtree(temp_dir)
+                return jsonify({
+                    'error': 'No valid repositories found',
+                    'submission_id': submission.id,
+                    'submission_ids': submission_ids
+                }), 400
+
+            # 更新提交记录
+            submission.details = f"API submission contains repositories: {', '.join(repo_type_mapping.keys())}\n"
+            submission.git_repos_path = temp_dir
+            db.session.commit()
+
+            # 特殊检查Minesweeper
+            if 'minesweeper' in repo_type_mapping:
+                minesweeper_dir = repo_type_mapping['minesweeper']
+                server_h_path = os.path.join(minesweeper_dir, 'server.h')
+                if not os.path.exists(server_h_path):
+                    # 清理临时目录
+                    shutil.rmtree(temp_dir)
+                    return jsonify({
+                        'error': 'server.h not found in Minesweeper repository',
+                        'submission_id': submission.id,
+                        'submission_ids': submission_ids
+                    }), 400
+
+            # 初始化Git仓库
+            for repo_type, repo_dir in repo_type_mapping.items():
+                if repo_type != 'minesweeper':
+                    try:
+                        subprocess.run(['git', 'init'],
+                                       cwd=repo_dir, check=True)
+                        subprocess.run(['git', 'add', '.'],
+                                       cwd=repo_dir, check=True)
+                        subprocess.run(
+                            ['git', 'config', 'user.email', 'you@example.com'], cwd=repo_dir, check=True)
+                        subprocess.run(
+                            ['git', 'config', 'user.name', 'Your Name'], cwd=repo_dir, check=True)
+                        subprocess.run(
+                            ['git', 'commit', '-m', 'Initial commit'], cwd=repo_dir, check=True)
+                        export_ok_path = os.path.join(
+                            repo_dir, '.git', 'git-daemon-export-ok')
+                        open(export_ok_path, 'w').close()
+                    except subprocess.SubprocessError:
+                        continue
+
+            # 启动Git Daemon
+            git_manager = GitDaemonManager(temp_dir)
+            daemon_pid = git_manager.start_daemon()
+            submission.git_daemon_pid = daemon_pid
+            db.session.commit()
+
+            # 等待Git Daemon启动
+            time.sleep(2)
+
+            # 处理Minesweeper特殊提交
+            if 'minesweeper' in repo_type_mapping:
+                minesweeper_dir = repo_type_mapping['minesweeper']
+                server_h_path = os.path.join(minesweeper_dir, 'server.h')
+                try:
+                    with open(server_h_path, 'r') as f:
+                        server_h_code = f.read()
+
+                    problem_id = REPOSITORY_PROBLEM_MAPPING['minesweeper'][0]
+                    response = requests.post(
+                        f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/problem/{problem_id}/submit",
+                        headers={
+                            'accept': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Authorization': f'Bearer {OJ_TOKEN}'
+                        },
+                        data={
+                            'public': 'false',
+                            'language': 'cpp',
+                            'code': server_h_code
+                        },
+                        timeout=30
+                    )
+
+                    if response.status_code == 201:
+                        result = response.json()
+                        oj_submission_id = result.get('id')
+                        submission.minesweeper_submission_id = oj_submission_id
+                        submission_ids['minesweeper'] = oj_submission_id
+                        submission.details += f"Minesweeper submitted, OJ ID: {oj_submission_id}\n"
+
+                except Exception as e:
+                    submission.details += f"Minesweeper submission error: {str(e)}\n"
+
+                time.sleep(2)
+
+            # 提交其他仓库
+            for repo_type, repo_dir in repo_type_mapping.items():
+                if repo_type != 'minesweeper':
+                    repo_name = os.path.basename(repo_dir)
+                    problem_ids = REPOSITORY_PROBLEM_MAPPING[repo_type]
+
+                    for i, problem_id in enumerate(problem_ids):
+                        try:
+                            git_url = f"git://{SERVER_IP}/{repo_name}"
+
+                            response = requests.post(
+                                f"https://acm.sjtu.edu.cn/OnlineJudge/api/v1/problem/{problem_id}/submit",
+                                headers={
+                                    'accept': 'application/json',
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    'Authorization': f'Bearer {OJ_TOKEN}'
+                                },
+                                data={
+                                    'public': 'false',
+                                    'language': 'git',
+                                    'code': git_url
+                                },
+                                timeout=30
+                            )
+
+                            if response.status_code == 201:
+                                result = response.json()
+                                oj_submission_id = result.get('id')
+
+                                # 设置对应字段
+                                if repo_type == 'basic':
+                                    submission.basic_submission_id = oj_submission_id
+                                    submission_ids['basic'] = oj_submission_id
+                                    submission.details += f"Basic submitted, OJ ID: {oj_submission_id}\n"
+                                elif repo_type == 'book':
+                                    if i == 0:
+                                        submission.book_submission_id = oj_submission_id
+                                        submission_ids['book'] = oj_submission_id
+                                        submission.details += f"Book (1) submitted, OJ ID: {oj_submission_id}\n"
+                                    else:
+                                        submission.book_second_submission_id = oj_submission_id
+                                        submission_ids['book_second'] = oj_submission_id
+                                        submission.details += f"Book (2) submitted, OJ ID: {oj_submission_id}\n"
+                                elif repo_type == 'icpc':
+                                    submission.icpc_submission_id = oj_submission_id
+                                    submission_ids['icpc'] = oj_submission_id
+                                    submission.details += f"ICPC submitted, OJ ID: {oj_submission_id}\n"
+                                elif repo_type == 'python':
+                                    submission.python_submission_id = oj_submission_id
+                                    submission_ids['python'] = oj_submission_id
+                                    submission.details += f"Python submitted, OJ ID: {oj_submission_id}\n"
+                                elif repo_type == 'ticket':
+                                    submission.ticket_submission_id = oj_submission_id
+                                    submission_ids['ticket'] = oj_submission_id
+                                    submission.details += f"Ticket submitted, OJ ID: {oj_submission_id}\n"
+                        except Exception as e:
+                            submission.details += f"{repo_type} submission error: {str(e)}\n"
+                            continue
+
+                        time.sleep(2)
+
+            db.session.commit()
+
+            # 启动监控线程
+            threading.Thread(
+                target=check_submission_status,
+                args=(submission.id,),
+                daemon=True
+            ).start()
+
+            # 返回结果
+            return jsonify({
+                'success': True,
+                'message': 'Submission processed successfully',
+                'submission_id': submission.id,
+                'submission_ids': submission_ids
+            })
+
+        except Exception as e:
+            # 处理异常
+            if temp_dir and os.path.exists(temp_dir):
+                try:
+                    shutil.rmtree(temp_dir)
+                except:
+                    pass
+
+            submission.details = f"API submission error: {str(e)}"
+            db.session.commit()
+
+            return jsonify({
+                'error': str(e),
+                'submission_id': submission.id,
+                'submission_ids': submission_ids
+            }), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/process_submission', methods=['POST'])
 def process_submission():
@@ -1032,6 +1426,7 @@ def api_task_detail(task_id):
             'message': str(e)
         }
         return jsonify(error_response), 500
+
 
 
 @app.cli.command("initdb")

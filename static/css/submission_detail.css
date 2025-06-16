@@ -150,3 +150,13 @@
         flex-direction: column;
     }
 }
+
+.no-submissions {
+    padding: 20px;
+    text-align: center;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    margin: 20px 0;
+}

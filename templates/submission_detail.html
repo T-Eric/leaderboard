@@ -20,6 +20,12 @@
 
     <div class="repositories-status">
         <h2>Repo Status</h2>
+        {% if not (submission.basic_submission_id or submission.book_submission_id or
+        submission.book_second_submission_id or
+        submission.icpc_submission_id or submission.minesweeper_submission_id or
+        submission.python_submission_id or submission.ticket_submission_id) %}
+        <p class="no-submissions">No repositories were submitted in this submission.</p>
+        {% else %}
         <table class="status-table">
             <thead>
                 <tr>
@@ -30,113 +36,124 @@
                 </tr>
             </thead>
             <tbody>
+                {% if submission.basic_submission_id %}
                 <tr>
                     <td>Basic (2510)</td>
-                    <td>{% if submission.basic_submission_id %}
+                    <td>
                         <a href="{{ url_for('task_detail', task_type='basic', oj_submission_id=submission.basic_submission_id, submission_id=submission.id) }}"
                             target="_blank">
                             {{ submission.basic_submission_id }}
                         </a>
-                        {% else %}Not Submitted{% endif %}
                     </td>
                     <td class="status {{ submission.basic_status|lower if submission.basic_status else '' }}">
                         {{ submission.basic_status or 'Waiting...' }}
                     </td>
                     <td>{{ "%.2f"|format(submission.basic_score) if submission.basic_score else 'Not Scored' }}</td>
                 </tr>
+                {% endif %}
+
+                {% if submission.book_submission_id %}
                 <tr>
                     <td>Book (1075)</td>
-                    <td>{% if submission.book_submission_id %}
+                    <td>
                         <a
                             href="{{ url_for('task_detail', task_type='book', oj_submission_id=submission.book_submission_id, submission_id=submission.id) }}">
                             {{ submission.book_submission_id }}
                         </a>
-                        {% else %}Not Submitted{% endif %}
                     </td>
-
                     <td class="status {{ submission.book_status|lower if submission.book_status else '' }}">
                         {{ submission.book_status or 'Waiting...' }}
                     </td>
                     <td>{{ "%.2f"|format(submission.book_score) if submission.book_score else 'Not Scored' }}</td>
                 </tr>
+                {% endif %}
+
+                {% if submission.book_second_submission_id %}
                 <tr>
                     <td>Book (1775)</td>
-                    <td>{% if submission.book_second_submission_id %}
+                    <td>
                         <a
                             href="{{ url_for('task_detail', task_type='book', oj_submission_id=submission.book_second_submission_id, submission_id=submission.id) }}">
                             {{ submission.book_second_submission_id }}
                         </a>
-                        {% else %}Not Submitted{% endif %}
                     </td>
                     <td
                         class="status {{ submission.book_second_status|lower if submission.book_second_status else '' }}">
                         {{ submission.book_second_status or 'Waiting...' }}
                     </td>
                     <td>{{ "%.2f"|format(submission.book_second_score) if submission.book_second_score else 'Not Scored'
-                        }}
-                    </td>
+                        }}</td>
                 </tr>
+                {% endif %}
+
+                {% if submission.icpc_submission_id %}
                 <tr>
                     <td>ICPC (1986)</td>
-                    <td>{% if submission.icpc_submission_id %}
+                    <td>
                         <a
                             href="{{ url_for('task_detail', task_type='icpc', oj_submission_id=submission.icpc_submission_id, submission_id=submission.id) }}">
                             {{ submission.icpc_submission_id }}
                         </a>
-                        {% else %}Not Submitted{% endif %}
                     </td>
                     <td class="status {{ submission.icpc_status|lower if submission.icpc_status else '' }}">
                         {{ submission.icpc_status or 'Waiting...' }}
                     </td>
                     <td>{{ "%.2f"|format(submission.icpc_score) if submission.icpc_score else 'Not Scored' }}</td>
                 </tr>
+                {% endif %}
+
+                {% if submission.minesweeper_submission_id %}
                 <tr>
                     <td>Minesweeper (2395)</td>
-                    <td>{% if submission.minesweeper_submission_id %}
+                    <td>
                         <a
                             href="{{ url_for('task_detail', task_type='minesweeper', oj_submission_id=submission.minesweeper_submission_id, submission_id=submission.id) }}">
                             {{ submission.minesweeper_submission_id }}
                         </a>
-                        {% else %}Not Submitted{% endif %}
                     </td>
                     <td
                         class="status {{ submission.minesweeper_status|lower if submission.minesweeper_status else '' }}">
                         {{ submission.minesweeper_status or 'Waiting...' }}
                     </td>
                     <td>{{ "%.2f"|format(submission.minesweeper_score) if submission.minesweeper_score else 'Not Scored'
-                        }}
-                    </td>
+                        }}</td>
                 </tr>
+                {% endif %}
+
+                {% if submission.python_submission_id %}
                 <tr>
                     <td>Python (2515)</td>
-                    <td>{% if submission.python_submission_id %}
+                    <td>
                         <a
                             href="{{ url_for('task_detail', task_type='python', oj_submission_id=submission.python_submission_id, submission_id=submission.id) }}">
                             {{ submission.python_submission_id }}
                         </a>
-                        {% else %}Not Submitted{% endif %}
                     </td>
                     <td class="status {{ submission.python_status|lower if submission.python_status else '' }}">
                         {{ submission.python_status or 'Waiting...' }}
                     </td>
                     <td>{{ "%.2f"|format(submission.python_score) if submission.python_score else 'Not Scored' }}</td>
                 </tr>
+                {% endif %}
+
+                {% if submission.ticket_submission_id %}
                 <tr>
                     <td>Ticket (1867)</td>
-                    <td>{% if submission.ticket_submission_id %}
+                    <td>
                         <a
                             href="{{ url_for('task_detail', task_type='ticket', oj_submission_id=submission.ticket_submission_id, submission_id=submission.id) }}">
                             {{ submission.ticket_submission_id }}
                         </a>
-                        {% else %}Not Submitted{% endif %}
                     </td>
                     <td class="status {{ submission.ticket_status|lower if submission.ticket_status else '' }}">
                         {{ submission.ticket_status or 'Waiting...' }}
                     </td>
                     <td>{{ "%.2f"|format(submission.ticket_score) if submission.ticket_score else 'Not Scored' }}</td>
                 </tr>
+                {% endif %}
             </tbody>
         </table>
+        {% endif %}
     </div>
 
     <div class="submission-details">
